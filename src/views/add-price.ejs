@@ -1,0 +1,66 @@
+<%- include("partials/header", { pageTitle }) %>
+
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Daily Tracking</p>
+      <h2>Add a Price Entry</h2>
+    </div>
+    <p>Record one day at a time so your trend data stays clean.</p>
+  </div>
+
+  <% if (errors.length > 0) { %>
+    <div class="message error-message">
+      <ul>
+        <% errors.forEach((error) => { %>
+          <li><%= error %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <form class="form-grid" action="/prices" method="POST">
+    <label>
+      Card
+      <select name="cardId" required>
+        <% cards.forEach((card) => { %>
+          <option value="<%= card.id %>" <%= Number(formData.cardId) === card.id ? "selected" : "" %>>
+            <%= card.name %> • <%= card.setName %> • #<%= card.cardNumber %>
+          </option>
+        <% }) %>
+      </select>
+    </label>
+
+    <label>
+      Date
+      <input type="date" name="entryDate" value="<%= formData.entryDate %>" required />
+    </label>
+
+    <label>
+      Raw Price
+      <input type="number" name="rawPrice" value="<%= formData.rawPrice %>" min="0" step="0.01" placeholder="25.00" required />
+    </label>
+
+    <label>
+      PSA 9 Price
+      <input type="number" name="psa9Price" value="<%= formData.psa9Price %>" min="0" step="0.01" placeholder="Optional" />
+    </label>
+
+    <label>
+      PSA 10 Price
+      <input type="number" name="psa10Price" value="<%= formData.psa10Price %>" min="0" step="0.01" placeholder="Optional" />
+    </label>
+
+    <label class="full-width">
+      Notes
+      <textarea name="notes" rows="4" placeholder="Example: local card shop asking price, eBay sold average, or market notes"><%= formData.notes %></textarea>
+    </label>
+
+    <div class="form-actions">
+      <button class="button" type="submit">Save Price Entry</button>
+      <a class="button button-secondary" href="/">Back to Dashboard</a>
+    </div>
+  </form>
+</section>
+
+<%- include("partials/footer") %>

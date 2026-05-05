@@ -1,0 +1,64 @@
+<%- include("partials/header", { pageTitle }) %>
+
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Watchlist</p>
+      <h2>Add a Card</h2>
+    </div>
+    <p>Save the basics first, then log prices over time.</p>
+  </div>
+
+  <% if (errors.length > 0) { %>
+    <div class="message error-message">
+      <ul>
+        <% errors.forEach((error) => { %>
+          <li><%= error %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
+
+  <form class="form-grid" action="/cards" method="POST">
+    <label>
+      Card Name
+      <input type="text" name="name" value="<%= formData.name %>" placeholder="Pikachu" required />
+    </label>
+
+    <label>
+      Set Name
+      <input type="text" name="setName" value="<%= formData.setName %>" placeholder="Base Set" required />
+    </label>
+
+    <label>
+      Card Number
+      <input type="text" name="cardNumber" value="<%= formData.cardNumber %>" placeholder="58/102" required />
+    </label>
+
+    <label>
+      Condition
+      <select name="condition" required>
+        <% conditionOptions.forEach((option) => { %>
+          <option value="<%= option %>" <%= option === formData.condition ? "selected" : "" %>><%= option %></option>
+        <% }) %>
+      </select>
+    </label>
+
+    <label>
+      Owned Quantity
+      <input type="number" name="ownedQuantity" value="<%= formData.ownedQuantity %>" min="0" step="1" required />
+    </label>
+
+    <label>
+      Average Buy Price
+      <input type="number" name="averageBuyPrice" value="<%= formData.averageBuyPrice %>" min="0" step="0.01" placeholder="12.50" required />
+    </label>
+
+    <div class="form-actions">
+      <button class="button" type="submit">Save Card</button>
+      <a class="button button-secondary" href="/">Back to Dashboard</a>
+    </div>
+  </form>
+</section>
+
+<%- include("partials/footer") %>

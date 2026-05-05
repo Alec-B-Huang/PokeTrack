@@ -1,0 +1,84 @@
+<%- include("partials/header", { pageTitle }) %>
+
+<section class="hero-card">
+  <div>
+    <p class="eyebrow">Local Dashboard</p>
+    <h2>Track your watchlist without APIs or scraping</h2>
+    <p class="hero-text">
+      Add cards, log daily prices, and quickly check whether your collection is up or down.
+    </p>
+  </div>
+  <div class="hero-actions">
+    <a class="button" href="/cards/new">Add a Card</a>
+    <a class="button button-secondary" href="/prices/new">Log a Price</a>
+  </div>
+</section>
+
+<% if (successMessage) { %>
+  <section class="message success-message">
+    <p><%= successMessage %></p>
+  </section>
+<% } %>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Watchlist</p>
+      <h3>Tracked Cards</h3>
+    </div>
+    <p><strong><%= dashboardCards.length %></strong> card(s)</p>
+  </div>
+
+  <% if (dashboardCards.length === 0) { %>
+    <div class="empty-state">
+      <h4>No cards yet</h4>
+      <p>Start by adding your first card to the watchlist.</p>
+      <a class="button" href="/cards/new">Add Your First Card</a>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Card</th>
+            <th>Condition</th>
+            <th>Owned</th>
+            <th>Avg Buy</th>
+            <th>Latest Raw</th>
+            <th>Latest Date</th>
+            <th>7-Day Change</th>
+            <th>Profit/Loss</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% dashboardCards.forEach((card) => { %>
+            <tr>
+              <td>
+                <strong><%= card.name %></strong>
+                <div class="subtle-text"><%= card.setName %> • #<%= card.cardNumber %></div>
+              </td>
+              <td><%= card.condition %></td>
+              <td><%= card.ownedQuantity %></td>
+              <td><%= formatCurrency(card.averageBuyPrice) %></td>
+              <td><%= card.latestEntry ? formatCurrency(card.latestEntry.rawPrice) : "N/A" %></td>
+              <td><%= card.latestEntry ? card.latestEntry.entryDate : "N/A" %></td>
+              <td class="<%= card.sevenDayChange > 0 ? 'positive' : card.sevenDayChange < 0 ? 'negative' : '' %>">
+                <%= formatPercent(card.sevenDayChange) %>
+              </td>
+              <td class="<%= card.profitLoss > 0 ? 'positive' : card.profitLoss < 0 ? 'negative' : '' %>">
+                <%= formatCurrency(card.profitLoss) %>
+              </td>
+              <td class="action-links">
+                <a href="/cards/<%= card.id %>">View</a>
+                <a href="/cards/<%= card.id %>/prices/new">Add Price</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>

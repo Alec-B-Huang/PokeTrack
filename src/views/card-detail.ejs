@@ -1,0 +1,56 @@
+<%- include("partials/header", { pageTitle }) %>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Card Detail</p>
+      <h2><%= card.name %></h2>
+      <p class="subtle-text"><%= card.setName %> • #<%= card.cardNumber %> • <%= card.condition %></p>
+    </div>
+    <div class="stack-right">
+      <p><strong>Owned:</strong> <%= card.ownedQuantity %></p>
+      <p><strong>Avg Buy:</strong> <%= formatCurrency(card.averageBuyPrice) %></p>
+      <a class="button" href="/cards/<%= card.id %>/prices/new">Add Price</a>
+    </div>
+  </div>
+
+  <% if (successMessage) { %>
+    <section class="message success-message">
+      <p><%= successMessage %></p>
+    </section>
+  <% } %>
+
+  <% if (card.priceHistory.length === 0) { %>
+    <div class="empty-state">
+      <h4>No price entries yet</h4>
+      <p>Add the first price entry to start tracking this card.</p>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Raw Price</th>
+            <th>PSA 9</th>
+            <th>PSA 10</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% card.priceHistory.forEach((entry) => { %>
+            <tr>
+              <td><%= entry.entryDate %></td>
+              <td><%= formatCurrency(entry.rawPrice) %></td>
+              <td><%= formatCurrency(entry.psa9Price) %></td>
+              <td><%= formatCurrency(entry.psa10Price) %></td>
+              <td><%= entry.notes || "—" %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>
