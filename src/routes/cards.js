@@ -1,4 +1,5 @@
 const express = require("express");
+const { ebayConfig } = require("../config/env");
 
 const {
   createCard,
@@ -6,6 +7,10 @@ const {
   getCards,
   getCardWithPriceHistory
 } = require("../services/cardService");
+const {
+  getLatestSnapshotForCard,
+  getSnapshotsForCard
+} = require("../services/externalSnapshotService");
 
 const router = express.Router();
 
@@ -116,6 +121,10 @@ router.get("/cards/:id", (req, res) => {
 
   return res.render("card-detail", {
     card,
+    ebayConfigured: ebayConfig.isConfigured,
+    ebaySnapshotHistory: getSnapshotsForCard(cardId),
+    errorMessage: req.query.error || "",
+    latestEbaySnapshot: getLatestSnapshotForCard(cardId),
     pageTitle: `${card.name} Details`,
     successMessage: req.query.success || ""
   });

@@ -1,8 +1,11 @@
 const express = require("express");
 const path = require("path");
 
+require("./config/env");
+
 const dashboardRoutes = require("./routes/dashboard");
 const cardRoutes = require("./routes/cards");
+const externalSnapshotRoutes = require("./routes/externalSnapshots");
 const priceRoutes = require("./routes/prices");
 
 const app = express();
@@ -48,6 +51,7 @@ app.locals.formatPercent = (value) => {
 
 app.use("/", dashboardRoutes);
 app.use("/", cardRoutes);
+app.use("/", externalSnapshotRoutes);
 app.use("/", priceRoutes);
 
 app.use((error, req, res, next) => {

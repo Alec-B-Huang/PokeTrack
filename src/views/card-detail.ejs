@@ -10,7 +10,14 @@
     <div class="stack-right">
       <p><strong>Owned:</strong> <%= card.ownedQuantity %></p>
       <p><strong>Avg Buy:</strong> <%= formatCurrency(card.averageBuyPrice) %></p>
-      <a class="button" href="/cards/<%= card.id %>/prices/new">Add Price</a>
+      <div class="stack-actions">
+        <a class="button" href="/cards/<%= card.id %>/prices/new">Add Price</a>
+        <form action="/cards/<%= card.id %>/external-snapshots/ebay/fetch" method="POST">
+          <button class="button button-secondary" type="submit" <%= ebayConfigured ? "" : "disabled" %>>
+            Fetch eBay Snapshot
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -19,6 +26,112 @@
       <p><%= successMessage %></p>
     </section>
   <% } %>
+
+  <% if (errorMessage) { %>
+    <section class="message error-message">
+      <p><%= errorMessage %></p>
+    </section>
+  <% } %>
+
+  <% if (!ebayConfigured) { %>
+    <section class="message info-message">
+      <p>eBay credentials are not configured yet. Add values to your local <code>.env</code> file to enable live snapshot fetching.</p>
+    </section>
+  <% } %>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">eBay Snapshot</p>
+      <h3>Latest eBay Snapshot</h3>
+    </div>
+    <p class="subtle-text">Stored separately from your manual price entries</p>
+  </div>
+
+  <% if (!latestEbaySnapshot) { %>
+    <div class="empty-state">
+      <h4>No eBay snapshot yet</h4>
+      <p>Use the fetch button to save an active-listing snapshot for this card.</p>
+    </div>
+  <% } else { %>
+    <div class="metric-grid">
+      <article class="metric-card">
+        <p class="eyebrow">Snapshot Date</p>
+        <h4><%= latestEbaySnapshot.snapshotDate %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Listing Count</p>
+        <h4><%= latestEbaySnapshot.listingCount %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Lowest Price</p>
+        <h4><%= formatCurrency(latestEbaySnapshot.lowestPrice) %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Median Price</p>
+        <h4><%= formatCurrency(latestEbaySnapshot.medianPrice) %></h4>
+      </article>
+    </div>
+
+    <div class="snapshot-meta">
+      <p><strong>Query:</strong> <%= latestEbaySnapshot.searchQuery %></p>
+      <p><strong>Notes:</strong> <%= latestEbaySnapshot.notes %></p>
+    </div>
+  <% } %>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">History</p>
+      <h3>eBay Snapshot History</h3>
+    </div>
+    <p class="subtle-text"><%= ebaySnapshotHistory.length %> snapshot(s)</p>
+  </div>
+
+  <% if (ebaySnapshotHistory.length === 0) { %>
+    <div class="empty-state">
+      <h4>No eBay history yet</h4>
+      <p>Fetched snapshots will appear here over time.</p>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Listings</th>
+            <th>Lowest</th>
+            <th>Median</th>
+            <th>Query</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% ebaySnapshotHistory.forEach((snapshot) => { %>
+            <tr>
+              <td><%= snapshot.snapshotDate %></td>
+              <td><%= snapshot.listingCount %></td>
+              <td><%= formatCurrency(snapshot.lowestPrice) %></td>
+              <td><%= formatCurrency(snapshot.medianPrice) %></td>
+              <td><%= snapshot.searchQuery %></td>
+              <td><%= snapshot.notes || "—" %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Manual Tracking</p>
+      <h3>Manual Price History</h3>
+    </div>
+  </div>
 
   <% if (card.priceHistory.length === 0) { %>
     <div class="empty-state">

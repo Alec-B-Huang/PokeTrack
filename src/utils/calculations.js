@@ -34,8 +34,32 @@ function calculateProfitLoss(latestRawPrice, averageBuyPrice, ownedQuantity) {
   return (Number(latestRawPrice) - Number(averageBuyPrice)) * Number(ownedQuantity);
 }
 
+function calculateMedian(values) {
+  if (!Array.isArray(values) || values.length === 0) {
+    return null;
+  }
+
+  const sortedValues = [...values]
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value))
+    .sort((firstValue, secondValue) => firstValue - secondValue);
+
+  if (sortedValues.length === 0) {
+    return null;
+  }
+
+  const middleIndex = Math.floor(sortedValues.length / 2);
+
+  if (sortedValues.length % 2 === 1) {
+    return sortedValues[middleIndex];
+  }
+
+  return (sortedValues[middleIndex - 1] + sortedValues[middleIndex]) / 2;
+}
+
 module.exports = {
   addDaysToDateString,
+  calculateMedian,
   calculatePercentChange,
   calculateProfitLoss
 };

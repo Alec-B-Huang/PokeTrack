@@ -29,3 +29,20 @@ CREATE TABLE IF NOT EXISTS price_entries (
   FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE,
   UNIQUE (card_id, entry_date)
 );
+
+CREATE TABLE IF NOT EXISTS external_price_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  card_id INTEGER NOT NULL,
+  source TEXT NOT NULL,
+  snapshot_date TEXT NOT NULL,
+  search_query TEXT NOT NULL,
+  listing_count INTEGER NOT NULL DEFAULT 0 CHECK (listing_count >= 0),
+  lowest_price REAL CHECK (lowest_price IS NULL OR lowest_price >= 0),
+  median_price REAL CHECK (median_price IS NULL OR median_price >= 0),
+  notes TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_external_price_snapshots_card_source_date
+  ON external_price_snapshots (card_id, source, snapshot_date DESC);
