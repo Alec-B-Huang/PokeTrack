@@ -316,6 +316,15 @@ textarea {
   font-size: 1.45rem;
 }
 
+.chart-shell {
+  position: relative;
+  min-height: 320px;
+  padding: 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: rgba(255, 253, 249, 0.9);
+}
+
 .snapshot-meta {
   margin-top: 1rem;
   color: var(--muted);
@@ -348,5 +357,10 @@ textarea {
 
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  .chart-shell {
+    min-height: 260px;
+    padding: 0.5rem;
   }
 }

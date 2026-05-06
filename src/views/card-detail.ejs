@@ -84,6 +84,27 @@
 <section class="panel">
   <div class="panel-header">
     <div>
+      <p class="eyebrow">Chart</p>
+      <h3>eBay Price Trend</h3>
+    </div>
+    <p class="subtle-text">Median and lowest saved eBay prices over time</p>
+  </div>
+
+  <% if (ebaySnapshotHistory.length === 0) { %>
+    <div class="empty-state">
+      <h4>No eBay chart data yet</h4>
+      <p>Fetch your first eBay snapshot to start visualizing saved price history.</p>
+    </div>
+  <% } else { %>
+    <div class="chart-shell">
+      <canvas id="ebaySnapshotChart" aria-label="eBay snapshot price history chart"></canvas>
+    </div>
+  <% } %>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
       <p class="eyebrow">History</p>
       <h3>eBay Snapshot History</h3>
     </div>
@@ -165,5 +186,81 @@
     </div>
   <% } %>
 </section>
+
+<% if (ebaySnapshotHistory.length > 0) { %>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const ebayChartData = <%- JSON.stringify(ebayChartData) %>;
+    const chartCanvas = document.getElementById("ebaySnapshotChart");
+
+    if (chartCanvas && window.Chart) {
+      new Chart(chartCanvas, {
+        type: "line",
+        data: {
+          labels: ebayChartData.labels,
+          datasets: [
+            {
+              label: "Median eBay Price",
+              data: ebayChartData.medianPrices,
+              borderColor: "#d64c2f",
+              backgroundColor: "rgba(214, 76, 47, 0.16)",
+              borderWidth: 3,
+              pointRadius: 4,
+              pointHoverRadius: 5,
+              tension: 0.25
+            },
+            {
+              label: "Lowest eBay Price",
+              data: ebayChartData.lowestPrices,
+              borderColor: "#4368ad",
+              backgroundColor: "rgba(67, 104, 173, 0.12)",
+              borderWidth: 2,
+              pointRadius: 4,
+              pointHoverRadius: 5,
+              tension: 0.25
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: "index",
+            intersect: false
+          },
+          scales: {
+            y: {
+              beginAtZero: false,
+              ticks: {
+                callback(value) {
+                  return new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD"
+                  }).format(value);
+                }
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                afterBody(items) {
+                  const firstItem = items[0];
+
+                  if (!firstItem) {
+                    return "";
+                  }
+
+                  const listingCount = ebayChartData.listingCounts[firstItem.dataIndex];
+                  return `Listing count: ${listingCount}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+<% } %>
 
 <%- include("partials/footer") %>

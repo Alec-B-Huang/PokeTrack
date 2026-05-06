@@ -60,6 +60,7 @@ PokeTrack/
     seed.sql
   scripts/
     initDb.js
+    seedChartTestData.js
     seedDb.js
 ```
 
@@ -111,6 +112,21 @@ PokeTrack/
 
    [http://localhost:3000](http://localhost:3000)
 
+## Chart Test Data
+
+For temporary chart testing only, you can add extra eBay snapshot history for `Charizard` from `Base Set`:
+
+```bash
+npm run seed-chart-test-data
+```
+
+Notes:
+
+- This is **test data only** for local chart development.
+- It looks up the target card by `name = Charizard` and `set_name = Base Set`.
+- Run `npm run seed-db` first so the target card exists.
+- The script replaces existing eBay snapshots for that one card with several chart-friendly sample points across multiple dates.
+
 ## eBay Environment Variables
 
 Add these values to your local `.env` file:
@@ -127,6 +143,7 @@ Notes:
 - Do not commit real API keys.
 - If eBay credentials are missing or invalid, the app will show a friendly error instead of crashing.
 - The current implementation targets the eBay Browse API and stores snapshot history in SQLite.
+- eBay snapshot charts use Chart.js through a browser CDN include, so no extra local install is needed.
 - Some eBay account or production-access details may still need to be finalized with your own developer account.
 
 ## Main Pages
@@ -144,6 +161,8 @@ Notes:
 - Dashboard calculations are kept in `src/utils/calculations.js`.
 - Database access is separated into small service files to keep routes easier to follow.
 - eBay credentials are loaded from `.env` through `src/config/env.js`.
+- The eBay chart on each card page is built from saved `external_price_snapshots` data.
+- `npm run seed-chart-test-data` is available for temporary local chart testing only.
 
 ## Assumptions in This MVP
 

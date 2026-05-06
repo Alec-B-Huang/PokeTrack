@@ -7,7 +7,8 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "init-db": "node scripts/initDb.js",
-    "seed-db": "node scripts/seedDb.js"
+    "seed-db": "node scripts/seedDb.js",
+    "seed-chart-test-data": "node scripts/seedChartTestData.js"
   },
   "keywords": [
     "pokemon",
