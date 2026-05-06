@@ -1,0 +1,4 @@
+card_name,set_name,source,snapshot_date,listing_count,lowest_price,median_price,notes
+Charizard,Base Set,eBay,2026-05-05,11,238.25,255.00,Manual import test
+Pikachu,Jungle,ALT,2026-05-05,4,8.10,9.40,Imported from spreadsheet
+Umbreon,Neo Discovery,PriceCharting,2026-05-05,0,,,No current pricing collected that day

@@ -45,6 +45,7 @@ PokeTrack/
       add-price.ejs
       card-detail.ejs
       dashboard.ejs
+      import-snapshots.ejs
     public/
       styles.css
     services/
@@ -54,8 +55,10 @@ PokeTrack/
       priceService.js
     utils/
       calculations.js
+      csvSnapshotImport.js
       ebayMapper.js
   data/
+    external_snapshot_import_template.csv
     schema.sql
     seed.sql
   scripts/
@@ -153,16 +156,43 @@ Notes:
 - `/prices/new` add a daily price entry
 - `/cards/:id` view one card and its price history
 - `/cards/:id/external-snapshots/ebay/fetch` fetch and save an eBay snapshot for one card
+- `/external-snapshots/import` paste CSV data to import external snapshots
 
 ## Notes for Beginners
 
 - Card data lives in the `cards` table.
 - Daily prices live in the `price_entries` table.
+- External snapshot imports and eBay snapshots both live in `external_price_snapshots`.
 - Dashboard calculations are kept in `src/utils/calculations.js`.
 - Database access is separated into small service files to keep routes easier to follow.
 - eBay credentials are loaded from `.env` through `src/config/env.js`.
 - The eBay chart on each card page is built from saved `external_price_snapshots` data.
 - `npm run seed-chart-test-data` is available for temporary local chart testing only.
+
+## CSV Snapshot Import
+
+Paste CSV data with this exact header:
+
+```csv
+card_name,set_name,source,snapshot_date,listing_count,lowest_price,median_price,notes
+```
+
+Example:
+
+```csv
+card_name,set_name,source,snapshot_date,listing_count,lowest_price,median_price,notes
+Charizard,Base Set,eBay,2026-05-05,11,238.25,255.00,Manual import test
+Pikachu,Jungle,ALT,2026-05-05,4,8.10,9.40,Imported from spreadsheet
+Umbreon,Neo Discovery,PriceCharting,2026-05-05,0,,,No current pricing collected that day
+```
+
+Rules:
+
+- `notes` column must exist, but notes cells may be blank.
+- `lowest_price` and `median_price` may be blank and will display as `N/A` in the UI.
+- Imported rows match cards by `card_name` and `set_name`.
+- Invalid or unmatched rows are rejected with clear errors before anything is imported.
+- Imported snapshots appear in the existing external chart and history table on the card detail page.
 
 ## Assumptions in This MVP
 

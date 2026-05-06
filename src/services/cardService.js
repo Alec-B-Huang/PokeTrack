@@ -42,6 +42,29 @@ function getCardById(cardId) {
   return card;
 }
 
+function findCardByNameAndSetName(cardName, setName) {
+  const db = getDb();
+  const statement = db.prepare(`
+    SELECT
+      id,
+      name,
+      set_name AS setName,
+      card_number AS cardNumber,
+      card_condition AS condition,
+      owned_quantity AS ownedQuantity,
+      average_buy_price AS averageBuyPrice,
+      created_at AS createdAt
+    FROM cards
+    WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))
+      AND LOWER(TRIM(set_name)) = LOWER(TRIM(?))
+    LIMIT 1
+  `);
+
+  const card = statement.get(cardName, setName) || null;
+  db.close();
+  return card;
+}
+
 function createCard(cardData) {
   const db = getDb();
   const statement = db.prepare(`
@@ -117,6 +140,7 @@ function getCardWithPriceHistory(cardId) {
 
 module.exports = {
   createCard,
+  findCardByNameAndSetName,
   getCardById,
   getCards,
   getCardWithPriceHistory

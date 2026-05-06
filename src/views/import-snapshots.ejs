@@ -1,0 +1,64 @@
+<%- include("partials/header", { pageTitle }) %>
+
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">CSV Import</p>
+      <h2>Import External Snapshot Data</h2>
+    </div>
+    <a class="button button-secondary" href="/external-snapshots/import/template">Download CSV Template</a>
+  </div>
+
+  <p class="subtle-text">
+    Paste CSV rows for ALT, TCGplayer, PriceCharting, eBay, or manually collected snapshot data.
+    Imported rows are matched to existing cards by <code>card_name</code> and <code>set_name</code>.
+  </p>
+
+  <% if (successMessage) { %>
+    <section class="message success-message">
+      <p><%= successMessage %></p>
+    </section>
+  <% } %>
+
+  <% if (errors.length > 0) { %>
+    <section class="message error-message">
+      <ul>
+        <% errors.forEach((error) => { %>
+          <li><%= error %></li>
+        <% }) %>
+      </ul>
+    </section>
+  <% } %>
+
+  <% if (importSummary) { %>
+    <section class="message info-message">
+      <p><strong>Imported rows:</strong> <%= importSummary.rowCount %></p>
+      <p><strong>Matched card(s):</strong> <%= importSummary.matchedCards.join(", ") %></p>
+    </section>
+  <% } %>
+
+  <section class="template-panel">
+    <h3>Required CSV Columns</h3>
+    <p class="subtle-text"><%= requiredColumns.join(", ") %></p>
+  </section>
+
+  <form action="/external-snapshots/import" method="POST">
+    <label class="full-width">
+      Paste CSV Text
+      <textarea
+        class="csv-textarea"
+        name="csvText"
+        rows="14"
+        placeholder="card_name,set_name,source,snapshot_date,listing_count,lowest_price,median_price,notes"
+        required
+      ><%= pastedCsv %></textarea>
+    </label>
+
+    <div class="form-actions">
+      <button class="button" type="submit">Import CSV</button>
+      <a class="button button-secondary" href="/">Back to Dashboard</a>
+    </div>
+  </form>
+</section>
+
+<%- include("partials/footer") %>

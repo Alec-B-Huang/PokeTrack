@@ -27,6 +27,7 @@ function buildEbayChartData(snapshots) {
 
   return {
     labels: sortedSnapshots.map((snapshot) => snapshot.snapshotDate),
+    sources: sortedSnapshots.map((snapshot) => snapshot.source),
     medianPrices: sortedSnapshots.map((snapshot) => snapshot.medianPrice),
     lowestPrices: sortedSnapshots.map((snapshot) => snapshot.lowestPrice),
     listingCounts: sortedSnapshots.map((snapshot) => snapshot.listingCount)
@@ -138,13 +139,13 @@ router.get("/cards/:id", (req, res) => {
     return res.status(404).send("Card not found.");
   }
 
-  const ebaySnapshotHistory = getSnapshotsForCard(cardId);
+  const externalSnapshotHistory = getSnapshotsForCard(cardId);
 
   return res.render("card-detail", {
     card,
-    ebayChartData: buildEbayChartData(ebaySnapshotHistory),
+    externalChartData: buildEbayChartData(externalSnapshotHistory),
     ebayConfigured: ebayConfig.isConfigured,
-    ebaySnapshotHistory,
+    externalSnapshotHistory,
     errorMessage: req.query.error || "",
     latestEbaySnapshot: getLatestSnapshotForCard(cardId),
     pageTitle: `${card.name} Details`,

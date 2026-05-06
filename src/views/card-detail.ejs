@@ -85,19 +85,19 @@
   <div class="panel-header">
     <div>
       <p class="eyebrow">Chart</p>
-      <h3>eBay Price Trend</h3>
+      <h3>External Price Trend</h3>
     </div>
-    <p class="subtle-text">Median and lowest saved eBay prices over time</p>
+    <p class="subtle-text">Median and lowest saved external snapshot prices over time</p>
   </div>
 
-  <% if (ebaySnapshotHistory.length === 0) { %>
+  <% if (externalSnapshotHistory.length === 0) { %>
     <div class="empty-state">
-      <h4>No eBay chart data yet</h4>
-      <p>Fetch your first eBay snapshot to start visualizing saved price history.</p>
+      <h4>No external chart data yet</h4>
+      <p>Fetch or import your first external snapshot to start visualizing saved price history.</p>
     </div>
   <% } else { %>
     <div class="chart-shell">
-      <canvas id="ebaySnapshotChart" aria-label="eBay snapshot price history chart"></canvas>
+      <canvas id="externalSnapshotChart" aria-label="External snapshot price history chart"></canvas>
     </div>
   <% } %>
 </section>
@@ -106,15 +106,15 @@
   <div class="panel-header">
     <div>
       <p class="eyebrow">History</p>
-      <h3>eBay Snapshot History</h3>
+      <h3>External Snapshot History</h3>
     </div>
-    <p class="subtle-text"><%= ebaySnapshotHistory.length %> snapshot(s)</p>
+    <p class="subtle-text"><%= externalSnapshotHistory.length %> snapshot(s)</p>
   </div>
 
-  <% if (ebaySnapshotHistory.length === 0) { %>
+  <% if (externalSnapshotHistory.length === 0) { %>
     <div class="empty-state">
-      <h4>No eBay history yet</h4>
-      <p>Fetched snapshots will appear here over time.</p>
+      <h4>No external history yet</h4>
+      <p>Fetched or imported snapshots will appear here over time.</p>
     </div>
   <% } else { %>
     <div class="table-wrap">
@@ -122,6 +122,7 @@
         <thead>
           <tr>
             <th>Date</th>
+            <th>Source</th>
             <th>Listings</th>
             <th>Lowest</th>
             <th>Median</th>
@@ -130,9 +131,10 @@
           </tr>
         </thead>
         <tbody>
-          <% ebaySnapshotHistory.forEach((snapshot) => { %>
+          <% externalSnapshotHistory.forEach((snapshot) => { %>
             <tr>
               <td><%= snapshot.snapshotDate %></td>
+              <td><%= snapshot.source %></td>
               <td><%= snapshot.listingCount %></td>
               <td><%= formatCurrency(snapshot.lowestPrice) %></td>
               <td><%= formatCurrency(snapshot.medianPrice) %></td>
@@ -187,21 +189,21 @@
   <% } %>
 </section>
 
-<% if (ebaySnapshotHistory.length > 0) { %>
+<% if (externalSnapshotHistory.length > 0) { %>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    const ebayChartData = <%- JSON.stringify(ebayChartData) %>;
-    const chartCanvas = document.getElementById("ebaySnapshotChart");
+    const externalChartData = <%- JSON.stringify(externalChartData) %>;
+    const chartCanvas = document.getElementById("externalSnapshotChart");
 
     if (chartCanvas && window.Chart) {
       new Chart(chartCanvas, {
         type: "line",
         data: {
-          labels: ebayChartData.labels,
+          labels: externalChartData.labels,
           datasets: [
             {
-              label: "Median eBay Price",
-              data: ebayChartData.medianPrices,
+              label: "Median External Price",
+              data: externalChartData.medianPrices,
               borderColor: "#d64c2f",
               backgroundColor: "rgba(214, 76, 47, 0.16)",
               borderWidth: 3,
@@ -210,8 +212,8 @@
               tension: 0.25
             },
             {
-              label: "Lowest eBay Price",
-              data: ebayChartData.lowestPrices,
+              label: "Lowest External Price",
+              data: externalChartData.lowestPrices,
               borderColor: "#4368ad",
               backgroundColor: "rgba(67, 104, 173, 0.12)",
               borderWidth: 2,
@@ -251,8 +253,9 @@
                     return "";
                   }
 
-                  const listingCount = ebayChartData.listingCounts[firstItem.dataIndex];
-                  return `Listing count: ${listingCount}`;
+                  const listingCount = externalChartData.listingCounts[firstItem.dataIndex];
+                  const source = externalChartData.sources[firstItem.dataIndex];
+                  return [`Source: ${source}`, `Listing count: ${listingCount}`];
                 }
               }
             }
