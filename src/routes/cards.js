@@ -8,6 +8,7 @@ const {
   getCardWithPriceHistory
 } = require("../services/cardService");
 const {
+  getActiveListingsForSnapshot,
   getLatestSnapshotForCard,
   getSnapshotsForCard
 } = require("../services/externalSnapshotService");
@@ -140,6 +141,10 @@ router.get("/cards/:id", (req, res) => {
   }
 
   const externalSnapshotHistory = getSnapshotsForCard(cardId);
+  const latestEbaySnapshot = getLatestSnapshotForCard(cardId);
+  const latestEbayActiveListings = latestEbaySnapshot
+    ? getActiveListingsForSnapshot(latestEbaySnapshot.id)
+    : [];
 
   return res.render("card-detail", {
     card,
@@ -147,7 +152,8 @@ router.get("/cards/:id", (req, res) => {
     ebayConfigured: ebayConfig.isConfigured,
     externalSnapshotHistory,
     errorMessage: req.query.error || "",
-    latestEbaySnapshot: getLatestSnapshotForCard(cardId),
+    latestEbayActiveListings,
+    latestEbaySnapshot,
     pageTitle: `${card.name} Details`,
     successMessage: req.query.success || ""
   });

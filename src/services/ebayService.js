@@ -3,8 +3,9 @@ const { calculateMedian } = require("../utils/calculations");
 const {
   buildEbaySearchQuery,
   buildEbaySnapshotNotes,
-  normalizeEbayItems,
-  extractUsdPrices
+  extractUsdPrices,
+  filterSpecificCardListings,
+  normalizeEbayItems
 } = require("../utils/ebayMapper");
 
 let tokenCache = {
@@ -111,11 +112,24 @@ async function fetchEbayActiveListingSnapshot(card) {
   const searchQuery = buildEbaySearchQuery(card);
   const payload = await fetchEbayBrowseSearch(searchQuery);
   const normalizedItems = normalizeEbayItems(payload.itemSummaries || []);
-  const usdPrices = extractUsdPrices(normalizedItems);
+  const filteredItems = filterSpecificCardListings(card, normalizedItems);
+  const usdPrices = extractUsdPrices(filteredItems);
+  const activeListings = filteredItems
+    .filter((item) => item.currency === "USD" && Number.isFinite(item.priceValue))
+    .map((item) => ({
+      currency: item.currency,
+      externalItemId: item.externalItemId,
+      listingCondition: item.condition,
+      listingUrl: item.listingUrl,
+      price: item.priceValue,
+      sellerUsername: item.sellerUsername,
+      title: item.title
+    }));
   const lowestPrice = usdPrices.length > 0 ? usdPrices[0] : null;
   const medianPrice = calculateMedian(usdPrices);
 
   return {
+    activeListings,
     source: "eBay",
     snapshotDate: new Date().toISOString().slice(0, 10),
     searchQuery,
@@ -123,10 +137,11 @@ async function fetchEbayActiveListingSnapshot(card) {
     lowestPrice,
     medianPrice,
     notes: buildEbaySnapshotNotes({
+      filteredUsdResults: usdPrices.length,
+      keptListings: filteredItems.length,
       marketplaceId: ebayConfig.marketplaceId,
       environment: ebayConfig.environment,
-      totalResults: Array.isArray(payload.itemSummaries) ? payload.itemSummaries.length : 0,
-      usdResults: usdPrices.length
+      returnedListings: normalizedItems.length
     })
   };
 }

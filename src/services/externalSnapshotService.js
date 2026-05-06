@@ -34,6 +34,71 @@ function createExternalPriceSnapshot(snapshotData) {
   return result.lastInsertRowid;
 }
 
+function createExternalPriceSnapshotWithListings(snapshotData, listingRows) {
+  const db = getDb();
+  const insertSnapshot = db.prepare(`
+    INSERT INTO external_price_snapshots (
+      card_id,
+      source,
+      snapshot_date,
+      search_query,
+      listing_count,
+      lowest_price,
+      median_price,
+      notes
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const insertListing = db.prepare(`
+    INSERT INTO ebay_active_listings (
+      snapshot_id,
+      external_item_id,
+      title,
+      price,
+      currency,
+      listing_condition,
+      listing_url,
+      seller_username
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const saveSnapshotAndListings = db.transaction((snapshot, listings) => {
+    const snapshotResult = insertSnapshot.run(
+      snapshot.cardId,
+      snapshot.source,
+      snapshot.snapshotDate,
+      snapshot.searchQuery,
+      snapshot.listingCount,
+      snapshot.lowestPrice,
+      snapshot.medianPrice,
+      snapshot.notes
+    );
+
+    const snapshotId = Number(snapshotResult.lastInsertRowid);
+
+    for (const listing of listings) {
+      insertListing.run(
+        snapshotId,
+        listing.externalItemId,
+        listing.title,
+        listing.price,
+        listing.currency,
+        listing.listingCondition,
+        listing.listingUrl,
+        listing.sellerUsername
+      );
+    }
+
+    return snapshotId;
+  });
+
+  const snapshotId = saveSnapshotAndListings(snapshotData, listingRows);
+  db.close();
+  return snapshotId;
+}
+
 function createExternalPriceSnapshots(snapshotRows) {
   const db = getDb();
   const insertSnapshot = db.prepare(`
@@ -135,11 +200,40 @@ function getLatestSnapshotForCard(cardId, source = SOURCE_EBAY) {
   return snapshot;
 }
 
+function getActiveListingsForSnapshot(snapshotId) {
+  const db = getDb();
+  const statement = db.prepare(`
+    SELECT
+      id,
+      snapshot_id AS snapshotId,
+      external_item_id AS externalItemId,
+      title,
+      price,
+      currency,
+      listing_condition AS listingCondition,
+      listing_url AS listingUrl,
+      seller_username AS sellerUsername,
+      created_at AS createdAt
+    FROM ebay_active_listings
+    WHERE snapshot_id = ?
+    ORDER BY
+      CASE WHEN price IS NULL THEN 1 ELSE 0 END ASC,
+      price ASC,
+      id ASC
+  `);
+
+  const listings = statement.all(snapshotId);
+  db.close();
+  return listings;
+}
+
 module.exports = {
   SEARCH_QUERY_IMPORTED_CSV,
   SOURCE_EBAY,
+  createExternalPriceSnapshotWithListings,
   createExternalPriceSnapshot,
   createExternalPriceSnapshots,
+  getActiveListingsForSnapshot,
   getLatestSnapshotForCard,
   getSnapshotsForCard
 };

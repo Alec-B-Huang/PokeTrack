@@ -344,6 +344,44 @@ textarea {
   color: var(--muted);
 }
 
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.listing-card {
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 253, 249, 0.92);
+}
+
+.listing-card h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.listing-card p {
+  margin: 0.35rem 0;
+}
+
+.listing-details {
+  margin-top: 1rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+
+.listing-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.listing-grid-extra {
+  margin-top: 1rem;
+}
+
 .site-footer {
   padding: 0 0 2rem;
   color: var(--muted);
@@ -376,5 +414,9 @@ textarea {
   .chart-shell {
     min-height: 260px;
     padding: 0.5rem;
+  }
+
+  .listing-grid {
+    grid-template-columns: 1fr;
   }
 }

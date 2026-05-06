@@ -84,6 +84,60 @@
 <section class="panel">
   <div class="panel-header">
     <div>
+      <p class="eyebrow">Active Listings</p>
+      <h3>Active eBay Listings</h3>
+    </div>
+    <p class="subtle-text">
+      <%= latestEbaySnapshot ? `From the latest eBay snapshot on ${latestEbaySnapshot.snapshotDate}` : "No eBay snapshot saved yet" %>
+    </p>
+  </div>
+
+  <% if (latestEbayActiveListings.length === 0) { %>
+    <div class="empty-state">
+      <h4>No active listings found</h4>
+      <p>Save an eBay snapshot with listing data to populate this section.</p>
+    </div>
+  <% } else { %>
+    <div class="listing-grid">
+      <% latestEbayActiveListings.slice(0, 6).forEach((listing) => { %>
+        <article class="listing-card">
+          <h4><%= listing.title %></h4>
+          <p><strong>Price:</strong> <%= formatCurrency(listing.price) %> <%= listing.currency || "" %></p>
+          <p><strong>Condition:</strong> <%= listing.listingCondition || "N/A" %></p>
+          <p><strong>Seller:</strong> <%= listing.sellerUsername || "N/A" %></p>
+          <p><strong>Item ID:</strong> <%= listing.externalItemId || "N/A" %></p>
+          <% if (listing.listingUrl) { %>
+            <p><a href="<%= listing.listingUrl %>" target="_blank" rel="noreferrer">View listing</a></p>
+          <% } %>
+        </article>
+      <% }) %>
+    </div>
+
+    <% if (latestEbayActiveListings.length > 6) { %>
+      <details class="listing-details">
+        <summary>View More (<%= latestEbayActiveListings.length - 6 %> more listing(s))</summary>
+        <div class="listing-grid listing-grid-extra">
+          <% latestEbayActiveListings.slice(6).forEach((listing) => { %>
+            <article class="listing-card">
+              <h4><%= listing.title %></h4>
+              <p><strong>Price:</strong> <%= formatCurrency(listing.price) %> <%= listing.currency || "" %></p>
+              <p><strong>Condition:</strong> <%= listing.listingCondition || "N/A" %></p>
+              <p><strong>Seller:</strong> <%= listing.sellerUsername || "N/A" %></p>
+              <p><strong>Item ID:</strong> <%= listing.externalItemId || "N/A" %></p>
+              <% if (listing.listingUrl) { %>
+                <p><a href="<%= listing.listingUrl %>" target="_blank" rel="noreferrer">View listing</a></p>
+              <% } %>
+            </article>
+          <% }) %>
+        </div>
+      </details>
+    <% } %>
+  <% } %>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
       <p class="eyebrow">Chart</p>
       <h3>External Price Trend</h3>
     </div>

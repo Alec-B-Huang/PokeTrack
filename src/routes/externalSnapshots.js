@@ -8,7 +8,7 @@ const {
 const {
   SEARCH_QUERY_IMPORTED_CSV,
   SOURCE_EBAY,
-  createExternalPriceSnapshot,
+  createExternalPriceSnapshotWithListings,
   createExternalPriceSnapshots
 } = require("../services/externalSnapshotService");
 const {
@@ -57,7 +57,7 @@ router.post("/cards/:id/external-snapshots/ebay/fetch", async (req, res) => {
   try {
     const snapshot = await fetchEbayActiveListingSnapshot(card);
 
-    createExternalPriceSnapshot({
+    createExternalPriceSnapshotWithListings({
       cardId: card.id,
       source: SOURCE_EBAY,
       snapshotDate: snapshot.snapshotDate,
@@ -66,7 +66,7 @@ router.post("/cards/:id/external-snapshots/ebay/fetch", async (req, res) => {
       lowestPrice: snapshot.lowestPrice,
       medianPrice: snapshot.medianPrice,
       notes: snapshot.notes
-    });
+    }, snapshot.activeListings);
 
     return res.redirect(buildRedirectUrl(card.id, {
       success: "Saved a new eBay snapshot for this card."

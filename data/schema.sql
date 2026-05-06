@@ -46,3 +46,23 @@ CREATE TABLE IF NOT EXISTS external_price_snapshots (
 
 CREATE INDEX IF NOT EXISTS idx_external_price_snapshots_card_source_date
   ON external_price_snapshots (card_id, source, snapshot_date DESC);
+
+CREATE TABLE IF NOT EXISTS ebay_active_listings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  snapshot_id INTEGER NOT NULL,
+  external_item_id TEXT,
+  title TEXT NOT NULL,
+  price REAL CHECK (price IS NULL OR price >= 0),
+  currency TEXT,
+  listing_condition TEXT,
+  listing_url TEXT,
+  seller_username TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (snapshot_id) REFERENCES external_price_snapshots(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_ebay_active_listings_snapshot_id
+  ON ebay_active_listings (snapshot_id);
+
+CREATE INDEX IF NOT EXISTS idx_ebay_active_listings_external_item_id
+  ON ebay_active_listings (external_item_id);

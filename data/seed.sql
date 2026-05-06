@@ -1,7 +1,8 @@
+DELETE FROM ebay_active_listings;
 DELETE FROM external_price_snapshots;
 DELETE FROM price_entries;
 DELETE FROM cards;
-DELETE FROM sqlite_sequence WHERE name IN ('cards', 'price_entries', 'external_price_snapshots');
+DELETE FROM sqlite_sequence WHERE name IN ('cards', 'price_entries', 'external_price_snapshots', 'ebay_active_listings');
 
 INSERT INTO cards (name, set_name, card_number, card_condition, owned_quantity, average_buy_price)
 VALUES
@@ -48,3 +49,23 @@ VALUES
     9.10,
     'Sample snapshot for local testing. Intended for USD fixed-price listing summary data.'
   );
+
+INSERT INTO ebay_active_listings (
+  snapshot_id,
+  external_item_id,
+  title,
+  price,
+  currency,
+  listing_condition,
+  listing_url,
+  seller_username
+)
+VALUES
+  (1, 'v1|100000000001|0', 'Charizard Base Set 4/102 Near Mint Holo', 229.99, 'USD', 'Used', 'https://www.ebay.com/itm/100000000001', 'cardvault01'),
+  (1, 'v1|100000000002|0', 'Pokemon Charizard Base Set 4/102 LP-NM', 232.50, 'USD', 'Used', 'https://www.ebay.com/itm/100000000002', 'pokeshopwest'),
+  (1, 'v1|100000000003|0', 'Charizard 4/102 Base Set Unlimited', 239.99, 'USD', 'Ungraded', 'https://www.ebay.com/itm/100000000003', 'rarecardfinder'),
+  (1, 'v1|100000000004|0', 'Base Set Charizard Holofoil 4/102', 245.00, 'USD', 'Used', 'https://www.ebay.com/itm/100000000004', 'holohunter'),
+  (1, 'v1|100000000005|0', 'Charizard Pokemon Base Set Holo Card', 249.95, 'USD', 'Ungraded', 'https://www.ebay.com/itm/100000000005', 'kanto_collectibles'),
+  (1, 'v1|100000000006|0', 'Charizard 4/102 Classic Collection', 255.00, 'USD', 'Used', 'https://www.ebay.com/itm/100000000006', 'trainertrade'),
+  (1, 'v1|100000000007|0', 'Vintage Charizard Base Set Holo', 259.99, 'USD', 'Used', 'https://www.ebay.com/itm/100000000007', 'pokemartdaily'),
+  (1, 'v1|100000000008|0', 'Base Set Charizard 4/102 Pokemon Card', 264.50, 'USD', 'Ungraded', 'https://www.ebay.com/itm/100000000008', 'hobbyden');

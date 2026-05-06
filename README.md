@@ -11,6 +11,7 @@ PokeTrack is a beginner-friendly local web app for manually tracking Pokemon car
   - exact 7-day percentage change when that comparison exists
   - profit or loss based on your average buy price and owned quantity
 - Fetch and store eBay active-listing snapshot data for a watched card
+- Store the individual active eBay listings behind each fetched eBay snapshot
 
 ## Tech Stack
 
@@ -146,6 +147,8 @@ Notes:
 - Do not commit real API keys.
 - If eBay credentials are missing or invalid, the app will show a friendly error instead of crashing.
 - The current implementation targets the eBay Browse API and stores snapshot history in SQLite.
+- Active eBay listings are stored separately from snapshot summary rows.
+- eBay active-listing filtering is intentionally conservative and runs before median/lowest snapshot calculations.
 - eBay snapshot charts use Chart.js through a browser CDN include, so no extra local install is needed.
 - Some eBay account or production-access details may still need to be finalized with your own developer account.
 
@@ -163,6 +166,7 @@ Notes:
 - Card data lives in the `cards` table.
 - Daily prices live in the `price_entries` table.
 - External snapshot imports and eBay snapshots both live in `external_price_snapshots`.
+- Individual eBay active listings live in `ebay_active_listings` and are tied to one saved eBay snapshot.
 - Dashboard calculations are kept in `src/utils/calculations.js`.
 - Database access is separated into small service files to keep routes easier to follow.
 - eBay credentials are loaded from `.env` through `src/config/env.js`.
@@ -200,6 +204,8 @@ Rules:
 - The 7-day percentage change only appears when there is an entry exactly 7 days before the latest one.
 - PSA 9 and PSA 10 prices are optional so you can still log raw prices when graded prices are unavailable.
 - eBay snapshots currently target USD marketplace data and store a simple aggregated snapshot instead of full listing records.
+- Active listings only are stored for eBay snapshots in this phase. Sold/completed sales are not included.
+- The eBay listing filter currently aims to keep the same card and exclude obvious unrelated variants like Celebrations or Evolutions for Base Set Charizard.
 
 ## Next Ideas
 
