@@ -9,7 +9,10 @@ const {
   SEARCH_QUERY_IMPORTED_CSV,
   SOURCE_EBAY,
   createExternalPriceSnapshotWithListings,
-  createExternalPriceSnapshots
+  createExternalPriceSnapshots,
+  deleteExternalSnapshot,
+  getLatestSnapshotForCard,
+  resetExternalSnapshotsForCard
 } = require("../services/externalSnapshotService");
 const {
   EbayIntegrationError,
@@ -82,6 +85,40 @@ router.post("/cards/:id/external-snapshots/ebay/fetch", async (req, res) => {
       error: userMessage
     }));
   }
+});
+
+router.post("/external-snapshots/:id/delete", (req, res) => {
+  const snapshotId = Number(req.params.id);
+
+  if (!Number.isInteger(snapshotId)) {
+    return res.status(404).send("External snapshot not found.");
+  }
+
+  const cardId = deleteExternalSnapshot(snapshotId);
+
+  if (!cardId) {
+    return res.status(404).send("External snapshot not found.");
+  }
+
+  return res.redirect(`/cards/${cardId}?success=External snapshot deleted.`);
+});
+
+router.post("/cards/:id/external-snapshots/reset", (req, res) => {
+  const cardId = Number(req.params.id);
+
+  if (!Number.isInteger(cardId)) {
+    return res.status(404).send("Card not found.");
+  }
+
+  const card = getCardById(cardId);
+
+  if (!card) {
+    return res.status(404).send("Card not found.");
+  }
+
+  resetExternalSnapshotsForCard(cardId);
+
+  return res.redirect(`/cards/${cardId}?success=External snapshots reset for this card.`);
 });
 
 router.get("/external-snapshots/import", (req, res) => {

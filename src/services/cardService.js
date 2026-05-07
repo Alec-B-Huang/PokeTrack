@@ -9,6 +9,8 @@ function getCards() {
       set_name AS setName,
       card_number AS cardNumber,
       card_condition AS condition,
+      grading_company AS gradingCompany,
+      grade,
       owned_quantity AS ownedQuantity,
       average_buy_price AS averageBuyPrice,
       created_at AS createdAt
@@ -30,6 +32,8 @@ function getCardById(cardId) {
       set_name AS setName,
       card_number AS cardNumber,
       card_condition AS condition,
+      grading_company AS gradingCompany,
+      grade,
       owned_quantity AS ownedQuantity,
       average_buy_price AS averageBuyPrice,
       created_at AS createdAt
@@ -73,10 +77,12 @@ function createCard(cardData) {
       set_name,
       card_number,
       card_condition,
+      grading_company,
+      grade,
       owned_quantity,
       average_buy_price
     )
-    VALUES (?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = statement.run(
@@ -84,12 +90,40 @@ function createCard(cardData) {
     cardData.setName,
     cardData.cardNumber,
     cardData.condition,
+    cardData.gradingCompany,
+    cardData.grade,
     cardData.ownedQuantity,
     cardData.averageBuyPrice
   );
 
   db.close();
   return result.lastInsertRowid;
+}
+
+function deleteCard(cardId) {
+  const db = getDb();
+  const getCardStatement = db.prepare(`
+    SELECT
+      id,
+      name
+    FROM cards
+    WHERE id = ?
+  `);
+  const deleteCardStatement = db.prepare(`
+    DELETE FROM cards
+    WHERE id = ?
+  `);
+
+  const existingCard = getCardStatement.get(cardId) || null;
+
+  if (!existingCard) {
+    db.close();
+    return null;
+  }
+
+  deleteCardStatement.run(cardId);
+  db.close();
+  return existingCard;
 }
 
 function getCardWithPriceHistory(cardId) {
@@ -101,6 +135,8 @@ function getCardWithPriceHistory(cardId) {
       set_name AS setName,
       card_number AS cardNumber,
       card_condition AS condition,
+      grading_company AS gradingCompany,
+      grade,
       owned_quantity AS ownedQuantity,
       average_buy_price AS averageBuyPrice,
       created_at AS createdAt
@@ -140,6 +176,7 @@ function getCardWithPriceHistory(cardId) {
 
 module.exports = {
   createCard,
+  deleteCard,
   findCardByNameAndSetName,
   getCardById,
   getCards,

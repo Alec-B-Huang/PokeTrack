@@ -17,8 +17,11 @@ const conditionOptions = [
   "Lightly Played",
   "Moderately Played",
   "Heavily Played",
-  "Damaged"
+  "Damaged",
+  "Graded"
 ];
+const gradingCompanyOptions = ["PSA"];
+const gradeOptions = Array.from({ length: 10 }, (_, index) => index + 1);
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -27,6 +30,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.locals.conditionOptions = conditionOptions;
+app.locals.gradeOptions = gradeOptions;
+app.locals.gradingCompanyOptions = gradingCompanyOptions;
 app.locals.currentYear = new Date().getFullYear();
 app.locals.formatCurrency = (value) => {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {

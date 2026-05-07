@@ -6,16 +6,26 @@
       <p class="eyebrow">Card Detail</p>
       <h2><%= card.name %></h2>
       <p class="subtle-text"><%= card.setName %> • #<%= card.cardNumber %> • <%= card.condition %></p>
+      <% if (card.condition === "Graded" && card.gradingCompany && card.grade) { %>
+        <p class="subtle-text"><%= card.gradingCompany %> <%= card.grade %></p>
+      <% } %>
     </div>
     <div class="stack-right">
       <p><strong>Owned:</strong> <%= card.ownedQuantity %></p>
       <p><strong>Avg Buy:</strong> <%= formatCurrency(card.averageBuyPrice) %></p>
       <div class="stack-actions">
-        <a class="button" href="/cards/<%= card.id %>/prices/new">Add Price</a>
         <form action="/cards/<%= card.id %>/external-snapshots/ebay/fetch" method="POST">
           <button class="button button-secondary" type="submit" <%= ebayConfigured ? "" : "disabled" %>>
-            Fetch eBay Snapshot
+            Fetch eBay Listings
           </button>
+        </form>
+        <a class="button" href="/cards/<%= card.id %>/prices/new">Add Price</a>
+        <form
+          action="/cards/<%= card.id %>/delete"
+          method="POST"
+          onsubmit="return confirm('Delete Card? This will permanently delete the card and all related manual price entries, external snapshots, and active listings.');"
+        >
+          <button class="button button-danger" type="submit">Delete Card</button>
         </form>
       </div>
     </div>
@@ -48,6 +58,18 @@
     </div>
     <p class="subtle-text">Stored separately from your manual price entries</p>
   </div>
+
+  <% if (latestEbaySnapshot) { %>
+    <div class="section-actions">
+      <form
+        action="/cards/<%= card.id %>/external-snapshots/reset"
+        method="POST"
+        onsubmit="return confirm('Reset all external snapshots for this card? This will also remove associated active eBay listings. Manual price entries will not be deleted.');"
+      >
+        <button class="button button-danger" type="submit">Reset External Snapshots For This Card</button>
+      </form>
+    </div>
+  <% } %>
 
   <% if (!latestEbaySnapshot) { %>
     <div class="empty-state">
@@ -182,6 +204,7 @@
             <th>Median</th>
             <th>Query</th>
             <th>Notes</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -194,6 +217,15 @@
               <td><%= formatCurrency(snapshot.medianPrice) %></td>
               <td><%= snapshot.searchQuery %></td>
               <td><%= snapshot.notes || "—" %></td>
+              <td>
+                <form
+                  action="/external-snapshots/<%= snapshot.id %>/delete"
+                  method="POST"
+                  onsubmit="return confirm('Delete this external snapshot? Associated active eBay listings from this snapshot will also be removed.');"
+                >
+                  <button class="button button-danger button-small" type="submit">Delete</button>
+                </form>
+              </td>
             </tr>
           <% }) %>
         </tbody>
@@ -225,6 +257,7 @@
             <th>PSA 9</th>
             <th>PSA 10</th>
             <th>Notes</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -235,6 +268,15 @@
               <td><%= formatCurrency(entry.psa9Price) %></td>
               <td><%= formatCurrency(entry.psa10Price) %></td>
               <td><%= entry.notes || "—" %></td>
+              <td>
+                <form
+                  action="/prices/<%= entry.id %>/delete"
+                  method="POST"
+                  onsubmit="return confirm('Delete this manual price entry? This only removes the selected manual row.');"
+                >
+                  <button class="button button-danger button-small" type="submit">Delete</button>
+                </form>
+              </td>
             </tr>
           <% }) %>
         </tbody>

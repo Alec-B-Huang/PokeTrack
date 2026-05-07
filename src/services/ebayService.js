@@ -1,6 +1,7 @@
 const { ebayConfig } = require("../config/env");
 const { calculateMedian } = require("../utils/calculations");
 const {
+  detectCardMode,
   buildEbaySearchQuery,
   buildEbaySnapshotNotes,
   extractUsdPrices,
@@ -109,10 +110,11 @@ async function fetchEbayBrowseSearch(searchQuery) {
 }
 
 async function fetchEbayActiveListingSnapshot(card) {
-  const searchQuery = buildEbaySearchQuery(card);
+  const cardMode = detectCardMode(card);
+  const searchQuery = buildEbaySearchQuery(card, cardMode);
   const payload = await fetchEbayBrowseSearch(searchQuery);
   const normalizedItems = normalizeEbayItems(payload.itemSummaries || []);
-  const filteredItems = filterSpecificCardListings(card, normalizedItems);
+  const filteredItems = filterSpecificCardListings(card, normalizedItems, cardMode);
   const usdPrices = extractUsdPrices(filteredItems);
   const activeListings = filteredItems
     .filter((item) => item.currency === "USD" && Number.isFinite(item.priceValue))
@@ -137,6 +139,7 @@ async function fetchEbayActiveListingSnapshot(card) {
     lowestPrice,
     medianPrice,
     notes: buildEbaySnapshotNotes({
+      cardMode,
       filteredUsdResults: usdPrices.length,
       keptListings: filteredItems.length,
       marketplaceId: ebayConfig.marketplaceId,

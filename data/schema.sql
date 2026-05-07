@@ -9,11 +9,14 @@ CREATE TABLE IF NOT EXISTS cards (
       'Lightly Played',
       'Moderately Played',
       'Heavily Played',
-      'Damaged'
+      'Damaged',
+      'Graded'
     )
   ),
   owned_quantity INTEGER NOT NULL DEFAULT 0 CHECK (owned_quantity >= 0),
   average_buy_price REAL NOT NULL DEFAULT 0 CHECK (average_buy_price >= 0),
+  grading_company TEXT CHECK (grading_company IS NULL OR grading_company = 'PSA'),
+  grade INTEGER CHECK (grade IS NULL OR grade BETWEEN 1 AND 10),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

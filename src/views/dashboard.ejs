@@ -31,9 +31,8 @@
 
   <% if (dashboardCards.length === 0) { %>
     <div class="empty-state">
-      <h4>No cards yet</h4>
-      <p>Start by adding your first card to the watchlist.</p>
-      <a class="button" href="/cards/new">Add Your First Card</a>
+      <h4>Dashboard is currently empty. Add a card to start tracking prices.</h4>
+      <a class="button" href="/cards/new">Add Card</a>
     </div>
   <% } else { %>
     <div class="table-wrap">
@@ -57,6 +56,9 @@
               <td>
                 <strong><%= card.name %></strong>
                 <div class="subtle-text"><%= card.setName %> • #<%= card.cardNumber %></div>
+                <% if (card.condition === "Graded" && card.gradingCompany && card.grade) { %>
+                  <div class="subtle-text"><%= card.gradingCompany %> <%= card.grade %></div>
+                <% } %>
               </td>
               <td><%= card.condition %></td>
               <td><%= card.ownedQuantity %></td>

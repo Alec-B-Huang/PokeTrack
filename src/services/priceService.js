@@ -32,6 +32,32 @@ function createPriceEntry(priceData) {
   return result.lastInsertRowid;
 }
 
+function deletePriceEntry(priceEntryId) {
+  const db = getDb();
+  const getCardStatement = db.prepare(`
+    SELECT
+      id,
+      card_id AS cardId
+    FROM price_entries
+    WHERE id = ?
+  `);
+  const deleteStatement = db.prepare(`
+    DELETE FROM price_entries
+    WHERE id = ?
+  `);
+
+  const existingEntry = getCardStatement.get(priceEntryId) || null;
+
+  if (!existingEntry) {
+    db.close();
+    return null;
+  }
+
+  deleteStatement.run(priceEntryId);
+  db.close();
+  return existingEntry.cardId;
+}
+
 function compareDashboardCards(cardA, cardB) {
   const latestDateA = cardA.latestEntry ? cardA.latestEntry.entryDate : null;
   const latestDateB = cardB.latestEntry ? cardB.latestEntry.entryDate : null;
@@ -121,5 +147,6 @@ function getDashboardCards() {
 
 module.exports = {
   createPriceEntry,
+  deletePriceEntry,
   getDashboardCards
 };

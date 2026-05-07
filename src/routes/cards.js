@@ -1,8 +1,10 @@
 const express = require("express");
 const { ebayConfig } = require("../config/env");
+const { sortActiveListingsForCard } = require("../utils/ebayMapper");
 
 const {
   createCard,
+  deleteCard,
   getCardById,
   getCards,
   getCardWithPriceHistory
@@ -37,6 +39,7 @@ function buildEbayChartData(snapshots) {
 
 function validateCardForm(formData, conditionOptions) {
   const errors = [];
+  const isGradedCard = formData.condition === "Graded";
 
   if (!formData.name.trim()) {
     errors.push("Card name is required.");
@@ -60,6 +63,18 @@ function validateCardForm(formData, conditionOptions) {
 
   if (formData.averageBuyPrice === "" || Number(formData.averageBuyPrice) < 0) {
     errors.push("Average buy price must be 0 or higher.");
+  }
+
+  if (isGradedCard) {
+    if (formData.gradingCompany !== "PSA") {
+      errors.push("Graded cards must use grading company PSA for now.");
+    }
+
+    const grade = Number(formData.grade);
+
+    if (!Number.isInteger(grade) || grade < 1 || grade > 10) {
+      errors.push("Graded cards must choose a PSA grade from 1 to 10.");
+    }
   }
 
   return errors;
@@ -88,6 +103,8 @@ router.get("/cards/new", (req, res) => {
       setName: "",
       cardNumber: "",
       condition: req.app.locals.conditionOptions[0],
+      gradingCompany: "",
+      grade: "",
       ownedQuantity: 1,
       averageBuyPrice: ""
     },
@@ -101,6 +118,8 @@ router.post("/cards", (req, res) => {
     setName: req.body.setName || "",
     cardNumber: req.body.cardNumber || "",
     condition: req.body.condition || "",
+    gradingCompany: req.body.gradingCompany || "",
+    grade: req.body.grade || "",
     ownedQuantity: req.body.ownedQuantity || "",
     averageBuyPrice: req.body.averageBuyPrice || ""
   };
@@ -120,11 +139,29 @@ router.post("/cards", (req, res) => {
     setName: formData.setName.trim(),
     cardNumber: formData.cardNumber.trim(),
     condition: formData.condition,
+    gradingCompany: formData.condition === "Graded" ? formData.gradingCompany : null,
+    grade: formData.condition === "Graded" ? Number(formData.grade) : null,
     ownedQuantity: Number(formData.ownedQuantity),
     averageBuyPrice: Number(formData.averageBuyPrice)
   });
 
   return res.redirect("/?success=Card added to your watchlist.");
+});
+
+router.post("/cards/:id/delete", (req, res) => {
+  const cardId = Number(req.params.id);
+
+  if (!Number.isInteger(cardId)) {
+    return res.status(404).send("Card not found.");
+  }
+
+  const deletedCard = deleteCard(cardId);
+
+  if (!deletedCard) {
+    return res.status(404).send("Card not found.");
+  }
+
+  return res.redirect("/?success=Card deleted successfully.");
 });
 
 router.get("/cards/:id", (req, res) => {
@@ -143,7 +180,7 @@ router.get("/cards/:id", (req, res) => {
   const externalSnapshotHistory = getSnapshotsForCard(cardId);
   const latestEbaySnapshot = getLatestSnapshotForCard(cardId);
   const latestEbayActiveListings = latestEbaySnapshot
-    ? getActiveListingsForSnapshot(latestEbaySnapshot.id)
+    ? sortActiveListingsForCard(card, getActiveListingsForSnapshot(latestEbaySnapshot.id))
     : [];
 
   return res.render("card-detail", {

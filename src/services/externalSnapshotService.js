@@ -34,6 +34,44 @@ function createExternalPriceSnapshot(snapshotData) {
   return result.lastInsertRowid;
 }
 
+function deleteExternalSnapshot(snapshotId) {
+  const db = getDb();
+  const getSnapshotStatement = db.prepare(`
+    SELECT
+      id,
+      card_id AS cardId
+    FROM external_price_snapshots
+    WHERE id = ?
+  `);
+  const deleteSnapshotStatement = db.prepare(`
+    DELETE FROM external_price_snapshots
+    WHERE id = ?
+  `);
+
+  const existingSnapshot = getSnapshotStatement.get(snapshotId) || null;
+
+  if (!existingSnapshot) {
+    db.close();
+    return null;
+  }
+
+  deleteSnapshotStatement.run(snapshotId);
+  db.close();
+  return existingSnapshot.cardId;
+}
+
+function resetExternalSnapshotsForCard(cardId) {
+  const db = getDb();
+  const deleteSnapshotsStatement = db.prepare(`
+    DELETE FROM external_price_snapshots
+    WHERE card_id = ?
+  `);
+
+  const result = deleteSnapshotsStatement.run(cardId);
+  db.close();
+  return result.changes;
+}
+
 function createExternalPriceSnapshotWithListings(snapshotData, listingRows) {
   const db = getDb();
   const insertSnapshot = db.prepare(`
@@ -233,7 +271,9 @@ module.exports = {
   createExternalPriceSnapshotWithListings,
   createExternalPriceSnapshot,
   createExternalPriceSnapshots,
+  deleteExternalSnapshot,
   getActiveListingsForSnapshot,
   getLatestSnapshotForCard,
-  getSnapshotsForCard
+  getSnapshotsForCard,
+  resetExternalSnapshotsForCard
 };

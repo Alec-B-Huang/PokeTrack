@@ -149,6 +149,7 @@ Notes:
 - The current implementation targets the eBay Browse API and stores snapshot history in SQLite.
 - Active eBay listings are stored separately from snapshot summary rows.
 - eBay active-listing filtering is intentionally conservative and runs before median/lowest snapshot calculations.
+- eBay fetching now uses either raw-card mode or graded-card mode depending on the watched card.
 - eBay snapshot charts use Chart.js through a browser CDN include, so no extra local install is needed.
 - Some eBay account or production-access details may still need to be finalized with your own developer account.
 
@@ -167,6 +168,8 @@ Notes:
 - Daily prices live in the `price_entries` table.
 - External snapshot imports and eBay snapshots both live in `external_price_snapshots`.
 - Individual eBay active listings live in `ebay_active_listings` and are tied to one saved eBay snapshot.
+- Manual price entries and external snapshots can be deleted safely from the card detail page, with confirmation prompts.
+- Cards themselves can be deleted from the card detail page, which also deletes their related price and snapshot records.
 - Dashboard calculations are kept in `src/utils/calculations.js`.
 - Database access is separated into small service files to keep routes easier to follow.
 - eBay credentials are loaded from `.env` through `src/config/env.js`.
@@ -206,6 +209,8 @@ Rules:
 - eBay snapshots currently target USD marketplace data and store a simple aggregated snapshot instead of full listing records.
 - Active listings only are stored for eBay snapshots in this phase. Sold/completed sales are not included.
 - The eBay listing filter currently aims to keep the same card and exclude obvious unrelated variants like Celebrations or Evolutions for Base Set Charizard.
+- Graded watched cards can use a looser slab-aware filter while raw-card searches remain strict.
+- PSA-graded watched cards can include PSA grade information in the eBay query and sort matching listings by grade closeness.
 
 ## Next Ideas
 

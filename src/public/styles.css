@@ -141,6 +141,10 @@ a {
   margin-bottom: 1rem;
 }
 
+.section-actions {
+  margin-bottom: 1rem;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -163,6 +167,22 @@ a {
 .button-secondary {
   background: transparent;
   color: var(--accent-dark);
+}
+
+.button-danger {
+  background: #b63d22;
+  border-color: #b63d22;
+  color: #fffaf6;
+}
+
+.button-danger:hover {
+  background: #912b16;
+  border-color: #912b16;
+}
+
+.button-small {
+  padding: 0.45rem 0.8rem;
+  font-size: 0.92rem;
 }
 
 .message {
@@ -258,6 +278,13 @@ th {
   flex-direction: column;
   gap: 0.4rem;
   font-weight: 700;
+}
+
+.graded-fields {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
 }
 
 .full-width,
@@ -396,6 +423,10 @@ textarea {
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .graded-fields {
     grid-template-columns: 1fr;
   }
 

@@ -1,7 +1,10 @@
 const express = require("express");
 
 const { getCards, getCardById } = require("../services/cardService");
-const { createPriceEntry } = require("../services/priceService");
+const {
+  createPriceEntry,
+  deletePriceEntry
+} = require("../services/priceService");
 
 const router = express.Router();
 
@@ -105,6 +108,22 @@ router.post("/prices", (req, res) => {
   }
 
   return res.redirect(`/cards/${formData.cardId}?success=Price entry saved.`);
+});
+
+router.post("/prices/:id/delete", (req, res) => {
+  const priceEntryId = Number(req.params.id);
+
+  if (!Number.isInteger(priceEntryId)) {
+    return res.status(404).send("Price entry not found.");
+  }
+
+  const cardId = deletePriceEntry(priceEntryId);
+
+  if (!cardId) {
+    return res.status(404).send("Price entry not found.");
+  }
+
+  return res.redirect(`/cards/${cardId}?success=Manual price entry deleted.`);
 });
 
 module.exports = router;

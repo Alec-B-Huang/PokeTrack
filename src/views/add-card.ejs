@@ -37,12 +37,34 @@
 
     <label>
       Condition
-      <select name="condition" required>
+      <select id="condition" name="condition" required>
         <% conditionOptions.forEach((option) => { %>
           <option value="<%= option %>" <%= option === formData.condition ? "selected" : "" %>><%= option %></option>
         <% }) %>
       </select>
     </label>
+
+    <div id="graded-fields" class="graded-fields" <%= formData.condition === "Graded" ? "" : "hidden" %>>
+      <label>
+        Grading Company
+        <select id="gradingCompany" name="gradingCompany">
+          <option value="">Select grading company</option>
+          <% gradingCompanyOptions.forEach((option) => { %>
+            <option value="<%= option %>" <%= option === formData.gradingCompany ? "selected" : "" %>><%= option %></option>
+          <% }) %>
+        </select>
+      </label>
+
+      <label>
+        Grade
+        <select id="grade" name="grade">
+          <option value="">Select grade</option>
+          <% gradeOptions.forEach((option) => { %>
+            <option value="<%= option %>" <%= String(option) === String(formData.grade) ? "selected" : "" %>><%= option %></option>
+          <% }) %>
+        </select>
+      </label>
+    </div>
 
     <label>
       Owned Quantity
@@ -60,5 +82,33 @@
     </div>
   </form>
 </section>
+
+<script>
+  const conditionField = document.getElementById("condition");
+  const gradedFields = document.getElementById("graded-fields");
+  const gradingCompanyField = document.getElementById("gradingCompany");
+  const gradeField = document.getElementById("grade");
+
+  function updateGradedFieldVisibility() {
+    const isGraded = conditionField && conditionField.value === "Graded";
+
+    if (gradedFields) {
+      gradedFields.hidden = !isGraded;
+    }
+
+    if (gradingCompanyField) {
+      gradingCompanyField.required = isGraded;
+    }
+
+    if (gradeField) {
+      gradeField.required = isGraded;
+    }
+  }
+
+  if (conditionField) {
+    conditionField.addEventListener("change", updateGradedFieldVisibility);
+    updateGradedFieldVisibility();
+  }
+</script>
 
 <%- include("partials/footer") %>
