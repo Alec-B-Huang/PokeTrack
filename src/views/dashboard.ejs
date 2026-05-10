@@ -44,7 +44,7 @@
             <th>Owned</th>
             <th>Avg Buy</th>
             <th>Latest Raw</th>
-            <th>Latest Date</th>
+            <th>Latest eBay Median</th>
             <th>7-Day Change</th>
             <th>Profit/Loss</th>
             <th>Actions</th>
@@ -60,20 +60,35 @@
                   <div class="subtle-text"><%= card.gradingCompany %> <%= card.grade %></div>
                 <% } %>
               </td>
-              <td><%= card.condition %></td>
+              <td>
+                <% if (card.condition === "Graded" && card.gradingCompany && card.grade) { %>
+                  <%= card.gradingCompany %> <%= card.grade %>
+                <% } else { %>
+                  <%= card.condition %>
+                <% } %>
+              </td>
               <td><%= card.ownedQuantity %></td>
               <td><%= formatCurrency(card.averageBuyPrice) %></td>
               <td><%= card.latestEntry ? formatCurrency(card.latestEntry.rawPrice) : "N/A" %></td>
-              <td><%= card.latestEntry ? card.latestEntry.entryDate : "N/A" %></td>
+              <td>
+                <%= card.latestEbaySnapshot && card.latestEbaySnapshot.medianPrice !== null ? formatCurrency(card.latestEbaySnapshot.medianPrice) : "N/A" %>
+                <% if (card.latestEbaySnapshot) { %>
+                  <div class="subtle-text market-meta">
+                    <%= card.latestEbaySnapshot.snapshotDate %> • <%= card.latestEbaySnapshot.listingCount %> listing(s)
+                  </div>
+                <% } %>
+              </td>
               <td class="<%= card.sevenDayChange > 0 ? 'positive' : card.sevenDayChange < 0 ? 'negative' : '' %>">
                 <%= formatPercent(card.sevenDayChange) %>
               </td>
               <td class="<%= card.profitLoss > 0 ? 'positive' : card.profitLoss < 0 ? 'negative' : '' %>">
                 <%= formatCurrency(card.profitLoss) %>
               </td>
-              <td class="action-links">
-                <a href="/cards/<%= card.id %>">View</a>
-                <a href="/cards/<%= card.id %>/prices/new">Add Price</a>
+              <td>
+                <div class="action-links">
+                  <a href="/cards/<%= card.id %>">View</a>
+                  <a href="/cards/<%= card.id %>/prices/new">Add Price</a>
+                </div>
               </td>
             </tr>
           <% }) %>

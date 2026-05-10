@@ -1,0 +1,77 @@
+<%- include("partials/header", { pageTitle }) %>
+
+<section class="hero-card">
+  <div>
+    <p class="eyebrow">Listings</p>
+    <h2>Active eBay listing snapshots</h2>
+    <p class="hero-text">
+      This section summarizes the active-listing snapshots you have already saved. Use each card detail page to fetch new listings and inspect the full saved listing set.
+    </p>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Summary</p>
+      <h3>Listing Coverage</h3>
+    </div>
+    <p><strong><%= cardsWithSavedListings.length %></strong> of <strong><%= cardsWithListingSummaries.length %></strong> card(s) have saved eBay listing snapshots</p>
+  </div>
+
+  <% if (cardsWithListingSummaries.length === 0) { %>
+    <div class="empty-state">
+      <h4>No cards yet</h4>
+      <p>Add a card on the dashboard to start tracking listings and prices.</p>
+      <a class="button" href="/cards/new">Add Card</a>
+    </div>
+  <% } else if (cardsWithSavedListings.length === 0) { %>
+    <div class="empty-state">
+      <h4>No saved active listings yet</h4>
+      <p>Fetch eBay listings from a card detail page to start building listing history.</p>
+      <a class="button" href="/">Go to Dashboard</a>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Card</th>
+            <th>Condition</th>
+            <th>Latest Snapshot</th>
+            <th>Median</th>
+            <th>Listings</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% cardsWithSavedListings.forEach((card) => { %>
+            <tr>
+              <td>
+                <strong><%= card.name %></strong>
+                <div class="subtle-text"><%= card.setName %> • #<%= card.cardNumber %></div>
+              </td>
+              <td>
+                <% if (card.condition === "Graded" && card.gradingCompany && card.grade) { %>
+                  <%= card.gradingCompany %> <%= card.grade %>
+                <% } else { %>
+                  <%= card.condition %>
+                <% } %>
+              </td>
+              <td><%= card.latestEbaySnapshot.snapshotDate %></td>
+              <td><%= formatCurrency(card.latestEbaySnapshot.medianPrice) %></td>
+              <td><%= card.latestEbaySnapshot.listingCount %></td>
+              <td>
+                <div class="action-links">
+                  <a href="/cards/<%= card.id %>">View Card</a>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include("partials/footer") %>

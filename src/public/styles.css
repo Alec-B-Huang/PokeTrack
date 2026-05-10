@@ -240,6 +240,11 @@ th {
   font-size: 0.95rem;
 }
 
+.market-meta {
+  margin-top: 0.25rem;
+  white-space: nowrap;
+}
+
 .positive {
   color: var(--positive);
   font-weight: 700;

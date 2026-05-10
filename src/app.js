@@ -6,7 +6,9 @@ require("./config/env");
 const dashboardRoutes = require("./routes/dashboard");
 const cardRoutes = require("./routes/cards");
 const externalSnapshotRoutes = require("./routes/externalSnapshots");
+const listingsRoutes = require("./routes/listings");
 const priceRoutes = require("./routes/prices");
+const salesRoutes = require("./routes/sales");
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -57,7 +59,9 @@ app.locals.formatPercent = (value) => {
 app.use("/", dashboardRoutes);
 app.use("/", cardRoutes);
 app.use("/", externalSnapshotRoutes);
+app.use("/", listingsRoutes);
 app.use("/", priceRoutes);
+app.use("/", salesRoutes);
 
 app.use((error, req, res, next) => {
   console.error(error);

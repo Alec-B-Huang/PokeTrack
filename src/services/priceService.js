@@ -59,8 +59,8 @@ function deletePriceEntry(priceEntryId) {
 }
 
 function compareDashboardCards(cardA, cardB) {
-  const latestDateA = cardA.latestEntry ? cardA.latestEntry.entryDate : null;
-  const latestDateB = cardB.latestEntry ? cardB.latestEntry.entryDate : null;
+  const latestDateA = cardA.latestActivityDate;
+  const latestDateB = cardB.latestActivityDate;
 
   if (latestDateA && latestDateB && latestDateA !== latestDateB) {
     return latestDateB.localeCompare(latestDateA);
@@ -93,6 +93,8 @@ function getDashboardCards() {
       set_name AS setName,
       card_number AS cardNumber,
       card_condition AS condition,
+      grading_company AS gradingCompany,
+      grade,
       owned_quantity AS ownedQuantity,
       average_buy_price AS averageBuyPrice
     FROM cards
@@ -112,9 +114,23 @@ function getDashboardCards() {
     ORDER BY entry_date DESC, id DESC
   `).all();
 
+  const externalSnapshots = db.prepare(`
+    SELECT
+      id,
+      card_id AS cardId,
+      source,
+      snapshot_date AS snapshotDate,
+      listing_count AS listingCount,
+      median_price AS medianPrice
+    FROM external_price_snapshots
+    ORDER BY snapshot_date DESC, id DESC
+  `).all();
+
   db.close();
 
   const pricesByCard = new Map();
+  const snapshotsByCard = new Map();
+  const latestEbaySnapshotsByCard = new Map();
 
   for (const entry of priceEntries) {
     const existingEntries = pricesByCard.get(entry.cardId) || [];
@@ -122,9 +138,22 @@ function getDashboardCards() {
     pricesByCard.set(entry.cardId, existingEntries);
   }
 
+  for (const snapshot of externalSnapshots) {
+    const existingSnapshots = snapshotsByCard.get(snapshot.cardId) || [];
+    existingSnapshots.push(snapshot);
+    snapshotsByCard.set(snapshot.cardId, existingSnapshots);
+
+    if (snapshot.source === "eBay" && !latestEbaySnapshotsByCard.has(snapshot.cardId)) {
+      latestEbaySnapshotsByCard.set(snapshot.cardId, snapshot);
+    }
+  }
+
   return cards.map((card) => {
     const cardEntries = pricesByCard.get(card.id) || [];
+    const cardSnapshots = snapshotsByCard.get(card.id) || [];
     const latestEntry = cardEntries[0] || null;
+    const latestExternalSnapshot = cardSnapshots[0] || null;
+    const latestEbaySnapshot = latestEbaySnapshotsByCard.get(card.id) || null;
     const comparisonDate = latestEntry ? addDaysToDateString(latestEntry.entryDate, -7) : null;
     const sevenDayEntry = comparisonDate
       ? cardEntries.find((entry) => entry.entryDate === comparisonDate) || null
@@ -135,10 +164,15 @@ function getDashboardCards() {
     const profitLoss = latestEntry
       ? calculateProfitLoss(latestEntry.rawPrice, card.averageBuyPrice, card.ownedQuantity)
       : null;
+    const latestActivityDate = [latestEntry ? latestEntry.entryDate : null, latestExternalSnapshot ? latestExternalSnapshot.snapshotDate : null]
+      .filter(Boolean)
+      .sort((dateA, dateB) => dateB.localeCompare(dateA))[0] || null;
 
     return {
       ...card,
+      latestActivityDate,
       latestEntry,
+      latestEbaySnapshot,
       sevenDayChange,
       profitLoss
     };
