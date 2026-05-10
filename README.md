@@ -148,6 +148,7 @@ Notes:
 - If eBay credentials are missing or invalid, the app will show a friendly error instead of crashing.
 - The current implementation targets the eBay Browse API and stores snapshot history in SQLite.
 - Active eBay listings are stored separately from snapshot summary rows.
+- External snapshots are deduplicated by `card_id + source + snapshot_date`, so same-day imports or eBay fetches update the existing row instead of creating duplicates.
 - eBay active-listing filtering is intentionally conservative and runs before median/lowest snapshot calculations.
 - eBay fetching now uses either raw-card mode or graded-card mode depending on the watched card.
 - eBay snapshot charts use Chart.js through a browser CDN include, so no extra local install is needed.
@@ -199,6 +200,7 @@ Rules:
 - `lowest_price` and `median_price` may be blank and will display as `N/A` in the UI.
 - Imported rows match cards by `card_name` and `set_name`.
 - Invalid or unmatched rows are rejected with clear errors before anything is imported.
+- If a row matches an existing `card_name + set_name + source + snapshot_date`, the existing same-day snapshot is updated instead of duplicated.
 - Imported snapshots appear in the existing external chart and history table on the card detail page.
 
 ## Assumptions in This MVP
@@ -206,7 +208,7 @@ Rules:
 - Profit/loss uses the latest raw price only.
 - The 7-day percentage change only appears when there is an entry exactly 7 days before the latest one.
 - PSA 9 and PSA 10 prices are optional so you can still log raw prices when graded prices are unavailable.
-- eBay snapshots currently target USD marketplace data and store a simple aggregated snapshot instead of full listing records.
+- eBay snapshots currently target USD marketplace data and store both a summary snapshot and the active listing rows behind that snapshot.
 - Active listings only are stored for eBay snapshots in this phase. Sold/completed sales are not included.
 - The eBay listing filter currently aims to keep the same card and exclude obvious unrelated variants like Celebrations or Evolutions for Base Set Charizard.
 - Graded watched cards can use a looser slab-aware filter while raw-card searches remain strict.

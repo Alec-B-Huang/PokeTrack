@@ -3,9 +3,40 @@ const { getDb } = require("../db");
 const SOURCE_EBAY = "eBay";
 const SEARCH_QUERY_IMPORTED_CSV = "CSV import";
 
-function createExternalPriceSnapshot(snapshotData) {
-  const db = getDb();
-  const statement = db.prepare(`
+function buildSnapshotRowFromRecord(record) {
+  return {
+    cardId: record.cardId,
+    createdAt: record.createdAt,
+    id: record.id,
+    listingCount: record.listingCount,
+    lowestPrice: record.lowestPrice,
+    medianPrice: record.medianPrice,
+    notes: record.notes,
+    searchQuery: record.searchQuery,
+    snapshotDate: record.snapshotDate,
+    source: record.source
+  };
+}
+
+function upsertSnapshot(db, snapshotData) {
+  const getExistingSnapshot = db.prepare(`
+    SELECT
+      id,
+      card_id AS cardId,
+      source,
+      snapshot_date AS snapshotDate,
+      search_query AS searchQuery,
+      listing_count AS listingCount,
+      lowest_price AS lowestPrice,
+      median_price AS medianPrice,
+      notes,
+      created_at AS createdAt
+    FROM external_price_snapshots
+    WHERE card_id = ? AND source = ? AND snapshot_date = ?
+    LIMIT 1
+  `);
+
+  const insertSnapshot = db.prepare(`
     INSERT INTO external_price_snapshots (
       card_id,
       source,
@@ -19,7 +50,47 @@ function createExternalPriceSnapshot(snapshotData) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  const result = statement.run(
+  const updateSnapshot = db.prepare(`
+    UPDATE external_price_snapshots
+    SET
+      search_query = ?,
+      listing_count = ?,
+      lowest_price = ?,
+      median_price = ?,
+      notes = ?
+    WHERE id = ?
+  `);
+
+  const existingSnapshot = getExistingSnapshot.get(
+    snapshotData.cardId,
+    snapshotData.source,
+    snapshotData.snapshotDate
+  );
+
+  if (existingSnapshot) {
+    updateSnapshot.run(
+      snapshotData.searchQuery,
+      snapshotData.listingCount,
+      snapshotData.lowestPrice,
+      snapshotData.medianPrice,
+      snapshotData.notes,
+      existingSnapshot.id
+    );
+
+    return {
+      action: "updated",
+      snapshot: {
+        ...buildSnapshotRowFromRecord(existingSnapshot),
+        listingCount: snapshotData.listingCount,
+        lowestPrice: snapshotData.lowestPrice,
+        medianPrice: snapshotData.medianPrice,
+        notes: snapshotData.notes,
+        searchQuery: snapshotData.searchQuery
+      }
+    };
+  }
+
+  const insertResult = insertSnapshot.run(
     snapshotData.cardId,
     snapshotData.source,
     snapshotData.snapshotDate,
@@ -30,8 +101,20 @@ function createExternalPriceSnapshot(snapshotData) {
     snapshotData.notes
   );
 
+  return {
+    action: "inserted",
+    snapshot: {
+      id: Number(insertResult.lastInsertRowid),
+      ...snapshotData
+    }
+  };
+}
+
+function createExternalPriceSnapshot(snapshotData) {
+  const db = getDb();
+  const result = upsertSnapshot(db, snapshotData);
   db.close();
-  return result.lastInsertRowid;
+  return result;
 }
 
 function deleteExternalSnapshot(snapshotId) {
@@ -74,20 +157,6 @@ function resetExternalSnapshotsForCard(cardId) {
 
 function createExternalPriceSnapshotWithListings(snapshotData, listingRows) {
   const db = getDb();
-  const insertSnapshot = db.prepare(`
-    INSERT INTO external_price_snapshots (
-      card_id,
-      source,
-      snapshot_date,
-      search_query,
-      listing_count,
-      lowest_price,
-      median_price,
-      notes
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-
   const insertListing = db.prepare(`
     INSERT INTO ebay_active_listings (
       snapshot_id,
@@ -101,20 +170,16 @@ function createExternalPriceSnapshotWithListings(snapshotData, listingRows) {
     )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
+  const deleteListingsForSnapshot = db.prepare(`
+    DELETE FROM ebay_active_listings
+    WHERE snapshot_id = ?
+  `);
 
   const saveSnapshotAndListings = db.transaction((snapshot, listings) => {
-    const snapshotResult = insertSnapshot.run(
-      snapshot.cardId,
-      snapshot.source,
-      snapshot.snapshotDate,
-      snapshot.searchQuery,
-      snapshot.listingCount,
-      snapshot.lowestPrice,
-      snapshot.medianPrice,
-      snapshot.notes
-    );
+    const snapshotResult = upsertSnapshot(db, snapshot);
+    const snapshotId = snapshotResult.snapshot.id;
 
-    const snapshotId = Number(snapshotResult.lastInsertRowid);
+    deleteListingsForSnapshot.run(snapshotId);
 
     for (const listing of listings) {
       insertListing.run(
@@ -129,47 +194,30 @@ function createExternalPriceSnapshotWithListings(snapshotData, listingRows) {
       );
     }
 
-    return snapshotId;
+    return snapshotResult;
   });
 
-  const snapshotId = saveSnapshotAndListings(snapshotData, listingRows);
+  const result = saveSnapshotAndListings(snapshotData, listingRows);
   db.close();
-  return snapshotId;
+  return result;
 }
 
 function createExternalPriceSnapshots(snapshotRows) {
   const db = getDb();
-  const insertSnapshot = db.prepare(`
-    INSERT INTO external_price_snapshots (
-      card_id,
-      source,
-      snapshot_date,
-      search_query,
-      listing_count,
-      lowest_price,
-      median_price,
-      notes
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
 
-  const insertMany = db.transaction((rows) => {
+  const upsertMany = db.transaction((rows) => {
+    const results = [];
+
     for (const row of rows) {
-      insertSnapshot.run(
-        row.cardId,
-        row.source,
-        row.snapshotDate,
-        row.searchQuery,
-        row.listingCount,
-        row.lowestPrice,
-        row.medianPrice,
-        row.notes
-      );
+      results.push(upsertSnapshot(db, row));
     }
+
+    return results;
   });
 
-  insertMany(snapshotRows);
+  const results = upsertMany(snapshotRows);
   db.close();
+  return results;
 }
 
 function getSnapshotsForCard(cardId, source = null) {

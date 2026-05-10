@@ -60,7 +60,7 @@ router.post("/cards/:id/external-snapshots/ebay/fetch", async (req, res) => {
   try {
     const snapshot = await fetchEbayActiveListingSnapshot(card);
 
-    createExternalPriceSnapshotWithListings({
+    const saveResult = createExternalPriceSnapshotWithListings({
       cardId: card.id,
       source: SOURCE_EBAY,
       snapshotDate: snapshot.snapshotDate,
@@ -71,8 +71,12 @@ router.post("/cards/:id/external-snapshots/ebay/fetch", async (req, res) => {
       notes: snapshot.notes
     }, snapshot.activeListings);
 
+    const successMessage = saveResult.action === "updated"
+      ? "Updated the existing same-day eBay snapshot for this card."
+      : "Saved a new eBay snapshot for this card.";
+
     return res.redirect(buildRedirectUrl(card.id, {
-      success: "Saved a new eBay snapshot for this card."
+      success: successMessage
     }));
   } catch (error) {
     console.error(error);
@@ -186,7 +190,22 @@ router.post("/external-snapshots/import", (req, res) => {
     }));
   }
 
-  createExternalPriceSnapshots(rowsToInsert);
+  const saveResults = createExternalPriceSnapshots(rowsToInsert);
+  const insertedCount = saveResults.filter((result) => result.action === "inserted").length;
+  const updatedCount = saveResults.filter((result) => result.action === "updated").length;
+  const successMessageParts = [];
+
+  if (insertedCount > 0) {
+    successMessageParts.push(`added ${insertedCount}`);
+  }
+
+  if (updatedCount > 0) {
+    successMessageParts.push(`updated ${updatedCount}`);
+  }
+
+  const successMessage = successMessageParts.length > 0
+    ? `Imported ${rowsToInsert.length} external snapshot row(s) successfully: ${successMessageParts.join(" and ")}.`
+    : `Imported ${rowsToInsert.length} external snapshot row(s) successfully.`;
 
   return res.render("import-snapshots", buildImportViewModel({
     importSummary: {
@@ -194,7 +213,7 @@ router.post("/external-snapshots/import", (req, res) => {
       rowCount: rowsToInsert.length
     },
     pastedCsv: "",
-    successMessage: `Imported ${rowsToInsert.length} external snapshot row(s) successfully.`
+    successMessage
   }));
 });
 

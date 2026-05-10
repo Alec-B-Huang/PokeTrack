@@ -84,6 +84,22 @@ function ensureCardsGradingSchema(db) {
   db.exec("PRAGMA foreign_keys = ON");
 }
 
+function ensureExternalSnapshotSameDayUniqueness(db) {
+  db.exec(`
+    DELETE FROM external_price_snapshots
+    WHERE id NOT IN (
+      SELECT MAX(id)
+      FROM external_price_snapshots
+      GROUP BY card_id, source, snapshot_date
+    )
+  `);
+
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_external_price_snapshots_card_source_date_unique
+      ON external_price_snapshots (card_id, source, snapshot_date)
+  `);
+}
+
 function getDb() {
   ensureDataDirectory();
 
@@ -94,6 +110,7 @@ function getDb() {
     const schemaSql = fs.readFileSync(schemaPath, "utf8");
     db.exec(schemaSql);
     ensureCardsGradingSchema(db);
+    ensureExternalSnapshotSameDayUniqueness(db);
     schemaInitialized = true;
   }
 
