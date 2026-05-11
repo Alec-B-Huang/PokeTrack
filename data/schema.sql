@@ -69,3 +69,45 @@ CREATE INDEX IF NOT EXISTS idx_ebay_active_listings_snapshot_id
 
 CREATE INDEX IF NOT EXISTS idx_ebay_active_listings_external_item_id
   ON ebay_active_listings (external_item_id);
+
+CREATE TABLE IF NOT EXISTS external_sales_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  card_id INTEGER NOT NULL,
+  source TEXT NOT NULL,
+  snapshot_date TEXT NOT NULL,
+  search_query TEXT NOT NULL,
+  sale_count INTEGER NOT NULL DEFAULT 0 CHECK (sale_count >= 0),
+  lowest_sale_price REAL CHECK (lowest_sale_price IS NULL OR lowest_sale_price >= 0),
+  median_sale_price REAL CHECK (median_sale_price IS NULL OR median_sale_price >= 0),
+  average_sale_price REAL CHECK (average_sale_price IS NULL OR average_sale_price >= 0),
+  highest_sale_price REAL CHECK (highest_sale_price IS NULL OR highest_sale_price >= 0),
+  notes TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_external_sales_snapshots_card_source_date
+  ON external_sales_snapshots (card_id, source, snapshot_date DESC);
+
+CREATE TABLE IF NOT EXISTS external_sold_sales (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  snapshot_id INTEGER NOT NULL,
+  external_item_id TEXT,
+  title TEXT NOT NULL,
+  sale_price REAL NOT NULL CHECK (sale_price >= 0),
+  currency TEXT NOT NULL,
+  sold_date TEXT NOT NULL,
+  listing_condition TEXT,
+  listing_format TEXT,
+  listing_url TEXT,
+  seller_username TEXT,
+  notes TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (snapshot_id) REFERENCES external_sales_snapshots(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_external_sold_sales_snapshot_id
+  ON external_sold_sales (snapshot_id);
+
+CREATE INDEX IF NOT EXISTS idx_external_sold_sales_external_item_id
+  ON external_sold_sales (external_item_id);

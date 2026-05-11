@@ -57,8 +57,26 @@ function calculateMedian(values) {
   return (sortedValues[middleIndex - 1] + sortedValues[middleIndex]) / 2;
 }
 
+function calculateAverage(values) {
+  if (!Array.isArray(values) || values.length === 0) {
+    return null;
+  }
+
+  const numericValues = values
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+
+  if (numericValues.length === 0) {
+    return null;
+  }
+
+  const total = numericValues.reduce((sum, value) => sum + value, 0);
+  return total / numericValues.length;
+}
+
 module.exports = {
   addDaysToDateString,
+  calculateAverage,
   calculateMedian,
   calculatePercentChange,
   calculateProfitLoss

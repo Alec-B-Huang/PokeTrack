@@ -264,6 +264,11 @@ th {
   max-width: 850px;
 }
 
+.form-panel-full {
+  max-width: none;
+  width: 100%;
+}
+
 .template-panel {
   margin: 1rem 0 1.5rem;
   padding: 1rem;
@@ -350,6 +355,10 @@ textarea {
   gap: 1rem;
 }
 
+.metric-grid-compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .metric-card {
   padding: 1rem;
   border-radius: 18px;
@@ -374,6 +383,56 @@ textarea {
 .snapshot-meta {
   margin-top: 1rem;
   color: var(--muted);
+}
+
+.market-signal {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  border-left-width: 6px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.market-signal-positive {
+  background: linear-gradient(135deg, rgba(15, 123, 70, 0.18), rgba(15, 123, 70, 0.07));
+  border-color: rgba(15, 123, 70, 0.3);
+}
+
+.market-signal-negative {
+  background: linear-gradient(135deg, rgba(182, 61, 34, 0.18), rgba(182, 61, 34, 0.07));
+  border-color: rgba(182, 61, 34, 0.3);
+}
+
+.market-signal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.market-signal-header h4,
+.market-signal p {
+  margin: 0;
+}
+
+.market-signal-header h4 {
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.market-signal p + p {
+  margin-top: 0.55rem;
+}
+
+.market-signal-change {
+  font-size: 1.15rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.market-signal .subtle-text {
+  color: rgba(44, 36, 26, 0.75);
 }
 
 .listing-grid {

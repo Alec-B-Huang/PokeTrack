@@ -96,6 +96,19 @@
       </article>
     </div>
 
+    <% if (marketSignal) { %>
+      <section class="market-signal market-signal-<%= marketSignal.tone %>">
+        <div class="market-signal-header">
+          <h4><%= marketSignal.title %></h4>
+          <p class="market-signal-change <%= marketSignal.tone %>"><%= formatPercent(marketSignal.percentChange) %></p>
+        </div>
+        <p><%= marketSignal.message %></p>
+        <p class="subtle-text">
+          Compared <%= marketSignal.latestSnapshot.snapshotDate %> against <%= marketSignal.previousSnapshot.snapshotDate %> using saved eBay active listing median prices only.
+        </p>
+      </section>
+    <% } %>
+
     <div class="snapshot-meta">
       <p><strong>Query:</strong> <%= latestEbaySnapshot.searchQuery %></p>
       <p><strong>Notes:</strong> <%= latestEbaySnapshot.notes %></p>

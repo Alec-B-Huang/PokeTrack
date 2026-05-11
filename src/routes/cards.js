@@ -11,6 +11,7 @@ const {
 } = require("../services/cardService");
 const {
   getActiveListingsForSnapshot,
+  getLatestValidMedianSnapshotsForCard,
   getLatestSnapshotForCard,
   getSnapshotsForCard
 } = require("../services/externalSnapshotService");
@@ -34,6 +35,41 @@ function buildEbayChartData(snapshots) {
     medianPrices: sortedSnapshots.map((snapshot) => snapshot.medianPrice),
     lowestPrices: sortedSnapshots.map((snapshot) => snapshot.lowestPrice),
     listingCounts: sortedSnapshots.map((snapshot) => snapshot.listingCount)
+  };
+}
+
+function buildMarketSignal(cardId) {
+  const validMedianSnapshots = getLatestValidMedianSnapshotsForCard(cardId);
+
+  if (validMedianSnapshots.length < 2) {
+    return null;
+  }
+
+  const [latestSnapshot, previousSnapshot] = validMedianSnapshots;
+  const latestMedian = Number(latestSnapshot.medianPrice);
+  const previousMedian = Number(previousSnapshot.medianPrice);
+
+  if (!Number.isFinite(latestMedian) || !Number.isFinite(previousMedian) || previousMedian === 0) {
+    return null;
+  }
+
+  const percentChange = ((latestMedian - previousMedian) / previousMedian) * 100;
+
+  if (Math.abs(percentChange) < 10) {
+    return null;
+  }
+
+  const isPositive = percentChange > 0;
+
+  return {
+    latestSnapshot,
+    percentChange,
+    previousSnapshot,
+    tone: isPositive ? "positive" : "negative",
+    title: isPositive ? "Positive Market Signal" : "Negative Market Signal",
+    message: isPositive
+      ? "Active listing prices increased significantly since the previous snapshot. This may suggest stronger market activity, but sold prices are not confirmed."
+      : "Active listing prices decreased significantly since the previous snapshot. This may suggest weaker market activity, but sold prices are not confirmed."
   };
 }
 
@@ -179,6 +215,7 @@ router.get("/cards/:id", (req, res) => {
 
   const externalSnapshotHistory = getSnapshotsForCard(cardId);
   const latestEbaySnapshot = getLatestSnapshotForCard(cardId);
+  const marketSignal = buildMarketSignal(cardId);
   const latestEbayActiveListings = latestEbaySnapshot
     ? sortActiveListingsForCard(card, getActiveListingsForSnapshot(latestEbaySnapshot.id))
     : [];
@@ -191,6 +228,7 @@ router.get("/cards/:id", (req, res) => {
     errorMessage: req.query.error || "",
     latestEbayActiveListings,
     latestEbaySnapshot,
+    marketSignal,
     pageTitle: `${card.name} Details`,
     successMessage: req.query.success || ""
   });

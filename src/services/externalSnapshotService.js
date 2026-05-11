@@ -286,6 +286,33 @@ function getLatestSnapshotForCard(cardId, source = SOURCE_EBAY) {
   return snapshot;
 }
 
+function getLatestValidMedianSnapshotsForCard(cardId, source = SOURCE_EBAY, limit = 2) {
+  const db = getDb();
+  const statement = db.prepare(`
+    SELECT
+      id,
+      card_id AS cardId,
+      source,
+      snapshot_date AS snapshotDate,
+      search_query AS searchQuery,
+      listing_count AS listingCount,
+      lowest_price AS lowestPrice,
+      median_price AS medianPrice,
+      notes,
+      created_at AS createdAt
+    FROM external_price_snapshots
+    WHERE card_id = ?
+      AND source = ?
+      AND median_price IS NOT NULL
+    ORDER BY snapshot_date DESC, id DESC
+    LIMIT ?
+  `);
+
+  const snapshots = statement.all(cardId, source, limit);
+  db.close();
+  return snapshots;
+}
+
 function getActiveListingsForSnapshot(snapshotId) {
   const db = getDb();
   const statement = db.prepare(`
@@ -321,6 +348,7 @@ module.exports = {
   createExternalPriceSnapshots,
   deleteExternalSnapshot,
   getActiveListingsForSnapshot,
+  getLatestValidMedianSnapshotsForCard,
   getLatestSnapshotForCard,
   getSnapshotsForCard,
   resetExternalSnapshotsForCard

@@ -3,18 +3,222 @@
 <section class="hero-card">
   <div>
     <p class="eyebrow">Sales</p>
-    <h2>Sold sales tracking is planned</h2>
+    <h2>Import sold comps without scraping</h2>
     <p class="hero-text">
-      Sales tracking is not implemented yet. This section will eventually track sold/completed eBay sales.
+      Paste sold/completed sales CSV data from eBay exports, ALT notes, Fanatics records, PriceCharting, or your own spreadsheets. Sold sales stay separate from active listings.
     </p>
   </div>
 </section>
 
-<section class="panel">
-  <div class="empty-state">
-    <h3>Coming later</h3>
-    <p>For now, PokeTrack only stores active eBay listing snapshots plus your manual price entries.</p>
+<section class="panel form-panel form-panel-full">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">CSV Import</p>
+      <h3>Import Sold Sales</h3>
+    </div>
+    <a class="button button-secondary" href="/sales/import/template">Download CSV Template</a>
   </div>
+
+  <p class="subtle-text">
+    Imported rows are matched to watched cards by <code>card_name</code> and <code>set_name</code>, then grouped by <code>card_id + source + snapshot_date</code> into sold-sales snapshots.
+  </p>
+
+  <% if (successMessage) { %>
+    <section class="message success-message">
+      <p><%= successMessage %></p>
+    </section>
+  <% } %>
+
+  <% if (errors.length > 0) { %>
+    <section class="message error-message">
+      <ul>
+        <% errors.forEach((error) => { %>
+          <li><%= error %></li>
+        <% }) %>
+      </ul>
+    </section>
+  <% } %>
+
+  <% if (importSummary) { %>
+    <section class="message info-message">
+      <p><strong>Imported rows:</strong> <%= importSummary.rowCount %></p>
+      <p><strong>Snapshot groups:</strong> <%= importSummary.groupCount %></p>
+      <p><strong>Matched card(s):</strong> <%= importSummary.matchedCards.join(", ") %></p>
+    </section>
+  <% } %>
+
+  <section class="template-panel">
+    <h3>Required CSV Columns</h3>
+    <p class="subtle-text"><%= requiredColumns.join(", ") %></p>
+  </section>
+
+  <form action="/sales/import" method="POST">
+    <label class="full-width">
+      Paste CSV Text
+      <textarea
+        class="csv-textarea"
+        name="csvText"
+        rows="14"
+        placeholder="card_name,set_name,source,snapshot_date,sold_date,title,sale_price,currency,listing_condition,listing_format,listing_url,external_item_id,seller_username,notes"
+        required
+      ><%= pastedCsv %></textarea>
+    </label>
+
+    <div class="form-actions">
+      <button class="button" type="submit">Import Sold Sales CSV</button>
+      <a class="button button-secondary" href="/">Back to Dashboard</a>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Summary</p>
+      <h3>Sold Sales Summary</h3>
+    </div>
+    <p><strong><%= soldSalesSummary.saleCount %></strong> sold sale row(s)</p>
+  </div>
+
+  <% if (soldSalesSummary.saleCount === 0) { %>
+    <div class="empty-state">
+      <h4>No sold sales imported yet</h4>
+      <p>Paste your first sold comps CSV above to start building sold-sales history.</p>
+    </div>
+  <% } else { %>
+    <div class="metric-grid metric-grid-compact">
+      <article class="metric-card">
+        <p class="eyebrow">Median Sold</p>
+        <h4><%= formatCurrency(soldSalesSummary.medianSalePrice) %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Average Sold</p>
+        <h4><%= formatCurrency(soldSalesSummary.averageSalePrice) %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Sold Rows</p>
+        <h4><%= soldSalesSummary.saleCount %></h4>
+      </article>
+    </div>
+  <% } %>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Snapshot History</p>
+      <h3>Sold Sales Snapshots</h3>
+    </div>
+    <p class="subtle-text"><%= salesSnapshots.length %> snapshot(s)</p>
+  </div>
+
+  <% if (salesSnapshots.length === 0) { %>
+    <div class="empty-state">
+      <h4>No sold snapshot history yet</h4>
+      <p>Imported sold-sales snapshot groups will appear here.</p>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Card</th>
+            <th>Source</th>
+            <th>Snapshot Date</th>
+            <th>Sale Count</th>
+            <th>Median</th>
+            <th>Average</th>
+            <th>Range</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% salesSnapshots.forEach((snapshot) => { %>
+            <tr>
+              <td>
+                <strong><%= snapshot.cardName %></strong>
+                <div class="subtle-text"><%= snapshot.setName %> • #<%= snapshot.cardNumber %></div>
+                <% if (snapshot.condition === "Graded" && snapshot.gradingCompany && snapshot.grade) { %>
+                  <div class="subtle-text"><%= snapshot.gradingCompany %> <%= snapshot.grade %></div>
+                <% } %>
+              </td>
+              <td><%= snapshot.source %></td>
+              <td><%= snapshot.snapshotDate %></td>
+              <td><%= snapshot.saleCount %></td>
+              <td><%= formatCurrency(snapshot.medianSalePrice) %></td>
+              <td><%= formatCurrency(snapshot.averageSalePrice) %></td>
+              <td>
+                <%= formatCurrency(snapshot.lowestSalePrice) %>
+                <div class="subtle-text">to <%= formatCurrency(snapshot.highestSalePrice) %></div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <p class="eyebrow">Sold Sales</p>
+      <h3>Imported Sold Comp History</h3>
+    </div>
+    <p class="subtle-text"><%= soldSales.length %> row(s)</p>
+  </div>
+
+  <% if (soldSales.length === 0) { %>
+    <div class="empty-state">
+      <h4>No sold comps yet</h4>
+      <p>Each imported sold row will appear here with its source and snapshot context.</p>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Sold Date</th>
+            <th>Card</th>
+            <th>Source</th>
+            <th>Sale Price</th>
+            <th>Condition</th>
+            <th>Format</th>
+            <th>Seller</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% soldSales.forEach((sale) => { %>
+            <tr>
+              <td><%= sale.soldDate %></td>
+              <td>
+                <strong><%= sale.cardName %></strong>
+                <div class="subtle-text"><%= sale.setName %></div>
+                <div class="subtle-text"><%= sale.title %></div>
+              </td>
+              <td>
+                <%= sale.source %>
+                <div class="subtle-text">Snapshot <%= sale.snapshotDate %></div>
+              </td>
+              <td>
+                <%= formatCurrency(sale.salePrice) %>
+                <div class="subtle-text"><%= sale.currency %></div>
+              </td>
+              <td><%= sale.listingCondition || "N/A" %></td>
+              <td><%= sale.listingFormat || "N/A" %></td>
+              <td><%= sale.sellerUsername || "N/A" %></td>
+              <td>
+                <%= sale.notes || "—" %>
+                <% if (sale.listingUrl) { %>
+                  <div class="subtle-text"><a href="<%= sale.listingUrl %>" target="_blank" rel="noreferrer">View source</a></div>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
 </section>
 
 <%- include("partials/footer") %>

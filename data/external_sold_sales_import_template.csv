@@ -1,0 +1,3 @@
+card_name,set_name,source,snapshot_date,sold_date,title,sale_price,currency,listing_condition,listing_format,listing_url,external_item_id,seller_username,notes
+Charizard,Base Set,eBay Sold,2026-05-10,2026-05-08,Charizard Base Set 4/102 PSA 10,8450.00,USD,Graded,FIXED_PRICE,https://example.com/item1,1234567890,seller_a,Manual sold comp
+Charizard,Base Set,ALT Sold,2026-05-10,2026-05-07,Charizard Base Set 4/102 Raw LP,410.00,USD,Lightly Played,AUCTION,https://example.com/item2,alt-42,,Imported from ALT notes

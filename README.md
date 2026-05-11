@@ -12,6 +12,7 @@ PokeTrack is a beginner-friendly local web app for manually tracking Pokemon car
   - profit or loss based on your average buy price and owned quantity
 - Fetch and store eBay active-listing snapshot data for a watched card
 - Store the individual active eBay listings behind each fetched eBay snapshot
+- Import sold/completed sales manually through pasted CSV while keeping them separate from active listings
 
 ## Tech Stack
 
@@ -38,6 +39,7 @@ PokeTrack/
       dashboard.js
       externalSnapshots.js
       prices.js
+      sales.js
     views/
       partials/
         footer.ejs
@@ -47,19 +49,23 @@ PokeTrack/
       card-detail.ejs
       dashboard.ejs
       import-snapshots.ejs
+      sales.ejs
     public/
       styles.css
     services/
       cardService.js
       ebayService.js
+      externalSalesService.js
       externalSnapshotService.js
       priceService.js
     utils/
       calculations.js
+      csvSoldSalesImport.js
       csvSnapshotImport.js
       ebayMapper.js
   data/
     external_snapshot_import_template.csv
+    external_sold_sales_import_template.csv
     schema.sql
     seed.sql
   scripts/
@@ -162,6 +168,7 @@ Notes:
 - `/cards/:id` view one card and its price history
 - `/cards/:id/external-snapshots/ebay/fetch` fetch and save an eBay snapshot for one card
 - `/external-snapshots/import` paste CSV data to import external snapshots
+- `/sales` paste CSV data to import sold/completed sales manually
 
 ## Notes for Beginners
 
@@ -169,6 +176,8 @@ Notes:
 - Daily prices live in the `price_entries` table.
 - External snapshot imports and eBay snapshots both live in `external_price_snapshots`.
 - Individual eBay active listings live in `ebay_active_listings` and are tied to one saved eBay snapshot.
+- Sold snapshot imports live in `external_sales_snapshots`.
+- Individual sold comps live in `external_sold_sales` and are tied to one saved sold snapshot.
 - Manual price entries and external snapshots can be deleted safely from the card detail page, with confirmation prompts.
 - Cards themselves can be deleted from the card detail page, which also deletes their related price and snapshot records.
 - Dashboard calculations are kept in `src/utils/calculations.js`.
@@ -203,13 +212,40 @@ Rules:
 - If a row matches an existing `card_name + set_name + source + snapshot_date`, the existing same-day snapshot is updated instead of duplicated.
 - Imported snapshots appear in the existing external chart and history table on the card detail page.
 
+## Sold Sales CSV Import
+
+Use the `Sales` section to paste sold/completed sales CSV rows without scraping.
+
+Required header:
+
+```csv
+card_name,set_name,source,snapshot_date,sold_date,title,sale_price,currency,listing_condition,listing_format,listing_url,external_item_id,seller_username,notes
+```
+
+Example:
+
+```csv
+card_name,set_name,source,snapshot_date,sold_date,title,sale_price,currency,listing_condition,listing_format,listing_url,external_item_id,seller_username,notes
+Charizard,Base Set,eBay Sold,2026-05-10,2026-05-08,Charizard Base Set 4/102 PSA 10,8450.00,USD,Graded,FIXED_PRICE,https://example.com/item1,1234567890,seller_a,Manual sold comp
+Charizard,Base Set,ALT Sold,2026-05-10,2026-05-07,Charizard Base Set 4/102 Raw LP,410.00,USD,Lightly Played,AUCTION,https://example.com/item2,alt-42,,Imported from ALT notes
+```
+
+Rules:
+
+- Sold sales stay separate from active eBay listings.
+- Rows match cards by `card_name` and `set_name`.
+- Imported rows are grouped by `card_id + source + snapshot_date`.
+- Each group creates or updates one `external_sales_snapshots` row.
+- Re-importing the same group replaces that snapshot's child `external_sold_sales` rows.
+- Snapshot summaries automatically compute sale count plus lowest, median, average, and highest sold price.
+
 ## Assumptions in This MVP
 
 - Profit/loss uses the latest raw price only.
 - The 7-day percentage change only appears when there is an entry exactly 7 days before the latest one.
 - PSA 9 and PSA 10 prices are optional so you can still log raw prices when graded prices are unavailable.
 - eBay snapshots currently target USD marketplace data and store both a summary snapshot and the active listing rows behind that snapshot.
-- Active listings only are stored for eBay snapshots in this phase. Sold/completed sales are not included.
+- Active listings only are stored for eBay snapshots in this phase. Sold/completed sales use manual CSV import instead of live API access right now.
 - The eBay listing filter currently aims to keep the same card and exclude obvious unrelated variants like Celebrations or Evolutions for Base Set Charizard.
 - Graded watched cards can use a looser slab-aware filter while raw-card searches remain strict.
 - PSA-graded watched cards can include PSA grade information in the eBay query and sort matching listings by grade closeness.
