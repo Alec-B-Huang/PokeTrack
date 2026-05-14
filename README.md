@@ -397,6 +397,8 @@ Rules:
 
 # Sold Sales CSV Import
 
+The `Sales` page accepts either an uploaded `.csv` file or pasted CSV text.
+
 Required CSV header:
 
 ```csv
@@ -415,6 +417,7 @@ Import behavior:
 * rows group into sold-sales snapshots
 * summary metrics are calculated automatically
 * re-importing the same snapshot replaces existing child sold-sale rows
+* upload and pasted-text imports use the same parser, validation, and dedup flow
 
 ---
 

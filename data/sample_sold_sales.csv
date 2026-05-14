@@ -1,0 +1,5 @@
+card_name,set_name,source,snapshot_date,sold_date,title,sale_price,currency,listing_condition,listing_format,listing_url,external_item_id,seller_username,notes
+Charizard,Base Set,eBay Sold,2026-05-10,2026-05-08,Charizard Base Set 4/102 PSA 10,8450.0,USD,Graded,FIXED_PRICE,https://example.com/charizard-psa10,1000001,vintagecards,High-end PSA 10 sale
+Charizard,Base Set,eBay Sold,2026-05-10,2026-05-07,Charizard Base Set 4/102 LP Raw,425.0,USD,Lightly Played,AUCTION,https://example.com/charizard-raw,1000002,pokemonvault,Raw LP auction
+Rayquaza VMAX Alt Art,Evolving Skies,ALT Sold,2026-05-10,2026-05-06,Rayquaza VMAX Alt Art PSA 10,1325.0,USD,Graded,FIXED_PRICE,https://example.com/rayquaza-psa10,1000003,slabmarket,Imported from ALT notes
+Rayquaza VMAX Alt Art,Evolving Skies,ALT Sold,2026-05-10,2026-05-05,Rayquaza VMAX Alt Art PSA 9,890.0,USD,Graded,FIXED_PRICE,https://example.com/rayquaza-psa9,1000004,gradedvault,Nearby PSA grade example

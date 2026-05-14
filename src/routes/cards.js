@@ -11,6 +11,8 @@ const {
 } = require("../services/cardService");
 const {
   getLatestSalesSnapshotForCard,
+  getLatestValidMedianSalesSnapshotsForCard,
+  getSalesSnapshotsForCard,
   getSoldSalesForSnapshot
 } = require("../services/externalSalesService");
 const {
@@ -74,6 +76,65 @@ function buildMarketSignal(cardId) {
     message: isPositive
       ? "Active listing prices increased significantly since the previous snapshot. This may suggest stronger market activity, but sold prices are not confirmed."
       : "Active listing prices decreased significantly since the previous snapshot. This may suggest weaker market activity, but sold prices are not confirmed."
+  };
+}
+
+function buildSoldSalesChartData(snapshots) {
+  const sortedSnapshots = [...snapshots].sort((firstSnapshot, secondSnapshot) => {
+    const dateComparison = firstSnapshot.snapshotDate.localeCompare(secondSnapshot.snapshotDate);
+
+    if (dateComparison !== 0) {
+      return dateComparison;
+    }
+
+    return firstSnapshot.id - secondSnapshot.id;
+  });
+
+  return {
+    averageSalePrices: sortedSnapshots.map((snapshot) => snapshot.averageSalePrice),
+    labels: sortedSnapshots.map((snapshot) => snapshot.snapshotDate),
+    medianSalePrices: sortedSnapshots.map((snapshot) => snapshot.medianSalePrice),
+    sources: sortedSnapshots.map((snapshot) => snapshot.source)
+  };
+}
+
+function buildSoldSalesSignal(cardId, source) {
+  if (!source) {
+    return null;
+  }
+
+  const validMedianSnapshots = getLatestValidMedianSalesSnapshotsForCard(cardId, source);
+
+  if (validMedianSnapshots.length < 2) {
+    return null;
+  }
+
+  const [latestSnapshot, previousSnapshot] = validMedianSnapshots;
+  const latestMedian = Number(latestSnapshot.medianSalePrice);
+  const previousMedian = Number(previousSnapshot.medianSalePrice);
+
+  if (!Number.isFinite(latestMedian) || !Number.isFinite(previousMedian) || previousMedian === 0) {
+    return null;
+  }
+
+  const percentChange = ((latestMedian - previousMedian) / previousMedian) * 100;
+
+  if (Math.abs(percentChange) < 10) {
+    return null;
+  }
+
+  const isPositive = percentChange > 0;
+
+  return {
+    latestSnapshot,
+    percentChange,
+    previousSnapshot,
+    source,
+    tone: isPositive ? "positive" : "negative",
+    title: isPositive ? "Positive Sold Sales Signal" : "Negative Sold Sales Signal",
+    message: isPositive
+      ? "Imported sold-sales median increased significantly since the previous snapshot for this source. This reflects saved sold comp data, not active listing movement."
+      : "Imported sold-sales median decreased significantly since the previous snapshot for this source. This reflects saved sold comp data, not active listing movement."
   };
 }
 
@@ -220,10 +281,16 @@ router.get("/cards/:id", (req, res) => {
   const externalSnapshotHistory = getSnapshotsForCard(cardId);
   const latestEbaySnapshot = getLatestSnapshotForCard(cardId);
   const latestSoldSalesSnapshot = getLatestSalesSnapshotForCard(cardId);
+  const soldSalesSnapshotHistory = latestSoldSalesSnapshot
+    ? getSalesSnapshotsForCard(cardId, latestSoldSalesSnapshot.source)
+    : [];
   const latestSoldSalesComps = latestSoldSalesSnapshot
     ? getSoldSalesForSnapshot(latestSoldSalesSnapshot.id)
     : [];
   const marketSignal = buildMarketSignal(cardId);
+  const soldSalesSignal = latestSoldSalesSnapshot
+    ? buildSoldSalesSignal(cardId, latestSoldSalesSnapshot.source)
+    : null;
   const latestEbayActiveListings = latestEbaySnapshot
     ? sortActiveListingsForCard(card, getActiveListingsForSnapshot(latestEbaySnapshot.id))
     : [];
@@ -236,10 +303,13 @@ router.get("/cards/:id", (req, res) => {
     errorMessage: req.query.error || "",
     latestEbayActiveListings,
     latestEbaySnapshot,
+    latestSoldSalesChartData: buildSoldSalesChartData(soldSalesSnapshotHistory),
     latestSoldSalesComps,
     latestSoldSalesSnapshot,
     marketSignal,
     pageTitle: `${card.name} Details`,
+    soldSalesSignal,
+    soldSalesSnapshotHistory,
     successMessage: req.query.success || ""
   });
 });

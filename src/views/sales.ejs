@@ -52,7 +52,15 @@
     <p class="subtle-text"><%= requiredColumns.join(", ") %></p>
   </section>
 
-  <form action="/sales/import" method="POST">
+  <form action="/sales/import" method="POST" enctype="multipart/form-data">
+    <input
+      class="visually-hidden"
+      id="salesCsvFile"
+      type="file"
+      name="csvFile"
+      accept=".csv,text/csv"
+    />
+
     <label class="full-width">
       Paste CSV Text
       <textarea
@@ -60,9 +68,15 @@
         name="csvText"
         rows="14"
         placeholder="card_name,set_name,source,snapshot_date,sold_date,title,sale_price,currency,listing_condition,listing_format,listing_url,external_item_id,seller_username,notes"
-        required
       ><%= pastedCsv %></textarea>
     </label>
+
+    <div class="file-upload-row">
+      <div class="file-upload-controls">
+        <label class="button button-secondary file-upload-trigger" for="salesCsvFile">Choose CSV File</label>
+        <span class="file-upload-status subtle-text" id="salesCsvFileStatus">No file selected</span>
+      </div>
+    </div>
 
     <div class="form-actions">
       <button class="button" type="submit">Import Sold Sales CSV</button>
@@ -220,5 +234,21 @@
     </div>
   <% } %>
 </section>
+
+<script>
+  (function () {
+    const fileInput = document.getElementById("salesCsvFile");
+    const fileStatus = document.getElementById("salesCsvFileStatus");
+
+    if (!fileInput || !fileStatus) {
+      return;
+    }
+
+    fileInput.addEventListener("change", () => {
+      const selectedFile = fileInput.files && fileInput.files[0];
+      fileStatus.textContent = selectedFile ? selectedFile.name : "No file selected";
+    });
+  })();
+</script>
 
 <%- include("partials/footer") %>

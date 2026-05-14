@@ -161,6 +161,25 @@
       </article>
     </div>
 
+    <% if (soldSalesSignal) { %>
+      <section class="sold-signal sold-signal-<%= soldSalesSignal.tone %>">
+        <div class="sold-signal-header">
+          <h4><%= soldSalesSignal.title %></h4>
+          <p class="sold-signal-change <%= soldSalesSignal.tone %>"><%= formatPercent(soldSalesSignal.percentChange) %></p>
+        </div>
+        <p><%= soldSalesSignal.message %></p>
+        <p class="subtle-text">
+          Compared <%= soldSalesSignal.latestSnapshot.snapshotDate %> against <%= soldSalesSignal.previousSnapshot.snapshotDate %> for imported <%= soldSalesSignal.source %> sold-sales medians only.
+        </p>
+      </section>
+    <% } %>
+
+    <% if (soldSalesSnapshotHistory.length > 0) { %>
+      <div class="chart-shell sold-chart-shell">
+        <canvas id="soldSalesChart" aria-label="Sold sales median price history chart"></canvas>
+      </div>
+    <% } %>
+
     <% if (latestSoldSalesComps.length === 0) { %>
       <div class="empty-state">
         <h4>No sold-sales data imported yet.</h4>
@@ -390,11 +409,13 @@
   <% } %>
 </section>
 
-<% if (externalSnapshotHistory.length > 0) { %>
+<% if (externalSnapshotHistory.length > 0 || soldSalesSnapshotHistory.length > 0) { %>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const externalChartData = <%- JSON.stringify(externalChartData) %>;
+    const soldSalesChartData = <%- JSON.stringify(latestSoldSalesChartData) %>;
     const chartCanvas = document.getElementById("externalSnapshotChart");
+    const soldChartCanvas = document.getElementById("soldSalesChart");
 
     if (chartCanvas && window.Chart) {
       new Chart(chartCanvas, {
@@ -457,6 +478,74 @@
                   const listingCount = externalChartData.listingCounts[firstItem.dataIndex];
                   const source = externalChartData.sources[firstItem.dataIndex];
                   return [`Source: ${source}`, `Listing count: ${listingCount}`];
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    if (soldChartCanvas && window.Chart) {
+      new Chart(soldChartCanvas, {
+        type: "line",
+        data: {
+          labels: soldSalesChartData.labels,
+          datasets: [
+            {
+              label: "Median Sold Price",
+              data: soldSalesChartData.medianSalePrices,
+              borderColor: "#0f7b46",
+              backgroundColor: "rgba(15, 123, 70, 0.16)",
+              borderWidth: 3,
+              pointRadius: 4,
+              pointHoverRadius: 5,
+              tension: 0.25
+            },
+            {
+              label: "Average Sold Price",
+              data: soldSalesChartData.averageSalePrices,
+              borderColor: "#4368ad",
+              backgroundColor: "rgba(67, 104, 173, 0.12)",
+              borderWidth: 2,
+              pointRadius: 3,
+              pointHoverRadius: 4,
+              tension: 0.25
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom"
+            },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  const value = context.parsed.y;
+                  if (value === null || value === undefined) {
+                    return `${context.dataset.label}: N/A`;
+                  }
+
+                  return `${context.dataset.label}: ${new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD"
+                  }).format(value)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback(value) {
+                  return new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                    maximumFractionDigits: 0
+                  }).format(value);
                 }
               }
             }

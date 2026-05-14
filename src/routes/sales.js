@@ -1,4 +1,5 @@
 const express = require("express");
+const multer = require("multer");
 const path = require("path");
 
 const { findCardByNameAndSetName } = require("../services/cardService");
@@ -16,6 +17,19 @@ const {
 
 const router = express.Router();
 const templatePath = path.join(__dirname, "..", "..", "data", "external_sold_sales_import_template.csv");
+const upload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, callback) => {
+    const lowerCaseName = (file.originalname || "").toLowerCase();
+    const isCsvFile = lowerCaseName.endsWith(".csv");
+
+    if (!isCsvFile) {
+      return callback(new Error("Please upload a .csv file."));
+    }
+
+    return callback(null, true);
+  }
+});
 
 function buildSalesViewModel(overrides = {}) {
   return {
@@ -32,25 +46,7 @@ function buildSalesViewModel(overrides = {}) {
   };
 }
 
-router.get("/sales", (req, res) => {
-  return res.render("sales", buildSalesViewModel());
-});
-
-router.get("/sales/import/template", (req, res) => {
-  return res.download(templatePath, "external_sold_sales_import_template.csv");
-});
-
-router.post("/sales/import", (req, res) => {
-  const pastedCsv = req.body.csvText || "";
-  const importRowsResult = buildImportRows(pastedCsv);
-
-  if (importRowsResult.errorMessage) {
-    return res.status(400).render("sales", buildSalesViewModel({
-      errors: [importRowsResult.errorMessage],
-      pastedCsv
-    }));
-  }
-
+function buildGroupedImports(importRowsResult) {
   const validationErrors = [];
   const matchedCards = [];
   const groupedImports = new Map();
@@ -101,40 +97,91 @@ router.post("/sales/import", (req, res) => {
     matchedCards.push(`${matchedCard.name} (${matchedCard.setName})`);
   });
 
-  if (validationErrors.length > 0) {
-    return res.status(400).render("sales", buildSalesViewModel({
-      errors: validationErrors,
-      pastedCsv
+  return {
+    groupedImports,
+    matchedCards,
+    validationErrors
+  };
+}
+
+router.get("/sales", (req, res) => {
+  return res.render("sales", buildSalesViewModel());
+});
+
+router.get("/sales/import/template", (req, res) => {
+  return res.download(templatePath, "external_sold_sales_import_template.csv");
+});
+
+router.post("/sales/import", (req, res) => {
+  upload.single("csvFile")(req, res, (uploadError) => {
+    if (uploadError) {
+      return res.status(400).render("sales", buildSalesViewModel({
+        errors: [uploadError.message || "Unable to upload that CSV file."],
+        pastedCsv: req.body?.csvText || ""
+      }));
+    }
+
+    const pastedCsv = (req.body.csvText || "").trim();
+    const uploadedCsvText = req.file ? req.file.buffer.toString("utf8") : "";
+    const csvText = uploadedCsvText || pastedCsv;
+
+    if (!csvText) {
+      return res.status(400).render("sales", buildSalesViewModel({
+        errors: ["Provide pasted CSV text or select a .csv file to import."],
+        pastedCsv
+      }));
+    }
+
+    const importRowsResult = buildImportRows(csvText);
+
+    if (importRowsResult.errorMessage) {
+      return res.status(400).render("sales", buildSalesViewModel({
+        errors: [importRowsResult.errorMessage],
+        pastedCsv
+      }));
+    }
+
+    const {
+      groupedImports,
+      matchedCards,
+      validationErrors
+    } = buildGroupedImports(importRowsResult);
+
+    if (validationErrors.length > 0) {
+      return res.status(400).render("sales", buildSalesViewModel({
+        errors: validationErrors,
+        pastedCsv
+      }));
+    }
+
+    const saveResults = createOrUpdateSalesSnapshotsFromImport(Array.from(groupedImports.values()));
+    const insertedCount = saveResults.filter((result) => result.action === "inserted").length;
+    const updatedCount = saveResults.filter((result) => result.action === "updated").length;
+    const importedRows = saveResults.reduce((sum, result) => sum + result.importedRows, 0);
+    const successMessageParts = [];
+
+    if (insertedCount > 0) {
+      successMessageParts.push(`added ${insertedCount} snapshot group(s)`);
+    }
+
+    if (updatedCount > 0) {
+      successMessageParts.push(`updated ${updatedCount} snapshot group(s)`);
+    }
+
+    const successMessage = successMessageParts.length > 0
+      ? `Imported ${importedRows} sold sale row(s) successfully: ${successMessageParts.join(" and ")}.`
+      : `Imported ${importedRows} sold sale row(s) successfully.`;
+
+    return res.render("sales", buildSalesViewModel({
+      importSummary: {
+        groupCount: groupedImports.size,
+        matchedCards: [...new Set(matchedCards)],
+        rowCount: importedRows
+      },
+      pastedCsv: "",
+      successMessage
     }));
-  }
-
-  const saveResults = createOrUpdateSalesSnapshotsFromImport(Array.from(groupedImports.values()));
-  const insertedCount = saveResults.filter((result) => result.action === "inserted").length;
-  const updatedCount = saveResults.filter((result) => result.action === "updated").length;
-  const importedRows = saveResults.reduce((sum, result) => sum + result.importedRows, 0);
-  const successMessageParts = [];
-
-  if (insertedCount > 0) {
-    successMessageParts.push(`added ${insertedCount} snapshot group(s)`);
-  }
-
-  if (updatedCount > 0) {
-    successMessageParts.push(`updated ${updatedCount} snapshot group(s)`);
-  }
-
-  const successMessage = successMessageParts.length > 0
-    ? `Imported ${importedRows} sold sale row(s) successfully: ${successMessageParts.join(" and ")}.`
-    : `Imported ${importedRows} sold sale row(s) successfully.`;
-
-  return res.render("sales", buildSalesViewModel({
-    importSummary: {
-      groupCount: groupedImports.size,
-      matchedCards: [...new Set(matchedCards)],
-      rowCount: importedRows
-    },
-    pastedCsv: "",
-    successMessage
-  }));
+  });
 });
 
 module.exports = router;
