@@ -359,6 +359,10 @@ textarea {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.sold-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .metric-card {
   padding: 1rem;
   border-radius: 18px;

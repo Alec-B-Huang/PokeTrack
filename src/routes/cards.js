@@ -10,6 +10,10 @@ const {
   getCardWithPriceHistory
 } = require("../services/cardService");
 const {
+  getLatestSalesSnapshotForCard,
+  getSoldSalesForSnapshot
+} = require("../services/externalSalesService");
+const {
   getActiveListingsForSnapshot,
   getLatestValidMedianSnapshotsForCard,
   getLatestSnapshotForCard,
@@ -215,6 +219,10 @@ router.get("/cards/:id", (req, res) => {
 
   const externalSnapshotHistory = getSnapshotsForCard(cardId);
   const latestEbaySnapshot = getLatestSnapshotForCard(cardId);
+  const latestSoldSalesSnapshot = getLatestSalesSnapshotForCard(cardId);
+  const latestSoldSalesComps = latestSoldSalesSnapshot
+    ? getSoldSalesForSnapshot(latestSoldSalesSnapshot.id)
+    : [];
   const marketSignal = buildMarketSignal(cardId);
   const latestEbayActiveListings = latestEbaySnapshot
     ? sortActiveListingsForCard(card, getActiveListingsForSnapshot(latestEbaySnapshot.id))
@@ -228,6 +236,8 @@ router.get("/cards/:id", (req, res) => {
     errorMessage: req.query.error || "",
     latestEbayActiveListings,
     latestEbaySnapshot,
+    latestSoldSalesComps,
+    latestSoldSalesSnapshot,
     marketSignal,
     pageTitle: `${card.name} Details`,
     successMessage: req.query.success || ""

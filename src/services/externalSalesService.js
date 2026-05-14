@@ -239,6 +239,40 @@ function getSalesSnapshots() {
   return snapshots;
 }
 
+function getLatestSalesSnapshotForCard(cardId) {
+  const db = getDb();
+  const statement = db.prepare(`
+    SELECT
+      external_sales_snapshots.id,
+      external_sales_snapshots.card_id AS cardId,
+      cards.name AS cardName,
+      cards.set_name AS setName,
+      cards.card_number AS cardNumber,
+      cards.card_condition AS condition,
+      cards.grading_company AS gradingCompany,
+      cards.grade,
+      external_sales_snapshots.source,
+      external_sales_snapshots.snapshot_date AS snapshotDate,
+      external_sales_snapshots.search_query AS searchQuery,
+      external_sales_snapshots.sale_count AS saleCount,
+      external_sales_snapshots.lowest_sale_price AS lowestSalePrice,
+      external_sales_snapshots.median_sale_price AS medianSalePrice,
+      external_sales_snapshots.average_sale_price AS averageSalePrice,
+      external_sales_snapshots.highest_sale_price AS highestSalePrice,
+      external_sales_snapshots.notes,
+      external_sales_snapshots.created_at AS createdAt
+    FROM external_sales_snapshots
+    INNER JOIN cards ON cards.id = external_sales_snapshots.card_id
+    WHERE external_sales_snapshots.card_id = ?
+    ORDER BY external_sales_snapshots.snapshot_date DESC, external_sales_snapshots.id DESC
+    LIMIT 1
+  `);
+
+  const snapshot = statement.get(cardId) || null;
+  db.close();
+  return snapshot;
+}
+
 function getSoldSales() {
   const db = getDb();
   const statement = db.prepare(`
@@ -271,6 +305,39 @@ function getSoldSales() {
   return soldSales;
 }
 
+function getSoldSalesForSnapshot(snapshotId) {
+  const db = getDb();
+  const statement = db.prepare(`
+    SELECT
+      external_sold_sales.id,
+      external_sold_sales.snapshot_id AS snapshotId,
+      external_sold_sales.external_item_id AS externalItemId,
+      external_sold_sales.title,
+      external_sold_sales.sale_price AS salePrice,
+      external_sold_sales.currency,
+      external_sold_sales.sold_date AS soldDate,
+      external_sold_sales.listing_condition AS listingCondition,
+      external_sold_sales.listing_format AS listingFormat,
+      external_sold_sales.listing_url AS listingUrl,
+      external_sold_sales.seller_username AS sellerUsername,
+      external_sold_sales.notes,
+      external_sales_snapshots.card_id AS cardId,
+      cards.name AS cardName,
+      cards.set_name AS setName,
+      external_sales_snapshots.source,
+      external_sales_snapshots.snapshot_date AS snapshotDate
+    FROM external_sold_sales
+    INNER JOIN external_sales_snapshots ON external_sales_snapshots.id = external_sold_sales.snapshot_id
+    INNER JOIN cards ON cards.id = external_sales_snapshots.card_id
+    WHERE external_sold_sales.snapshot_id = ?
+    ORDER BY external_sold_sales.sold_date DESC, external_sold_sales.id DESC
+  `);
+
+  const soldSales = statement.all(snapshotId);
+  db.close();
+  return soldSales;
+}
+
 function getSoldSalesSummary() {
   const soldSales = getSoldSales();
   const prices = soldSales.map((sale) => sale.salePrice);
@@ -285,7 +352,9 @@ function getSoldSalesSummary() {
 module.exports = {
   SEARCH_QUERY_IMPORTED_CSV,
   createOrUpdateSalesSnapshotsFromImport,
+  getLatestSalesSnapshotForCard,
   getSalesSnapshots,
   getSoldSales,
+  getSoldSalesForSnapshot,
   getSoldSalesSummary
 };

@@ -119,6 +119,98 @@
 <section class="panel">
   <div class="panel-header">
     <div>
+      <p class="eyebrow">Sold Sales</p>
+      <h3>Latest Sold Sales Snapshot</h3>
+    </div>
+    <p class="subtle-text">Imported sold comps stay separate from active listings</p>
+  </div>
+
+  <% if (!latestSoldSalesSnapshot) { %>
+    <div class="empty-state">
+      <h4>No sold-sales data imported yet.</h4>
+    </div>
+  <% } else { %>
+    <div class="metric-grid sold-summary-grid">
+      <article class="metric-card">
+        <p class="eyebrow">Snapshot Date</p>
+        <h4><%= latestSoldSalesSnapshot.snapshotDate %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Source</p>
+        <h4><%= latestSoldSalesSnapshot.source %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Sale Count</p>
+        <h4><%= latestSoldSalesSnapshot.saleCount %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Lowest Sold</p>
+        <h4><%= formatCurrency(latestSoldSalesSnapshot.lowestSalePrice) %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Median Sold</p>
+        <h4><%= formatCurrency(latestSoldSalesSnapshot.medianSalePrice) %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Average Sold</p>
+        <h4><%= formatCurrency(latestSoldSalesSnapshot.averageSalePrice) %></h4>
+      </article>
+      <article class="metric-card">
+        <p class="eyebrow">Highest Sold</p>
+        <h4><%= formatCurrency(latestSoldSalesSnapshot.highestSalePrice) %></h4>
+      </article>
+    </div>
+
+    <% if (latestSoldSalesComps.length === 0) { %>
+      <div class="empty-state">
+        <h4>No sold-sales data imported yet.</h4>
+      </div>
+    <% } else { %>
+      <div class="table-wrap sold-sales-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Sold Date</th>
+              <th>Title</th>
+              <th>Sale Price</th>
+              <th>Currency</th>
+              <th>Condition</th>
+              <th>Format</th>
+              <th>Source / Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% latestSoldSalesComps.forEach((sale) => { %>
+              <tr>
+                <td><%= sale.soldDate %></td>
+                <td>
+                  <strong><%= sale.title %></strong>
+                  <% if (sale.notes) { %>
+                    <div class="subtle-text"><%= sale.notes %></div>
+                  <% } %>
+                </td>
+                <td><%= formatCurrency(sale.salePrice) %></td>
+                <td><%= sale.currency %></td>
+                <td><%= sale.listingCondition || "N/A" %></td>
+                <td><%= sale.listingFormat || "N/A" %></td>
+                <td>
+                  <%= latestSoldSalesSnapshot.source %>
+                  <% if (sale.listingUrl) { %>
+                    <div class="subtle-text"><a href="<%= sale.listingUrl %>" target="_blank" rel="noreferrer">View source</a></div>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  <% } %>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
       <p class="eyebrow">Active Listings</p>
       <h3>Active eBay Listings</h3>
     </div>
