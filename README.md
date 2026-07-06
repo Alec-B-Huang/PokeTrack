@@ -468,3 +468,21 @@ This script:
 * Database access is separated into service files for readability
 * The project intentionally favors clarity and maintainability over heavy abstraction
 * The app is designed as a learning-focused full-stack project and local collection tool
+
+## Long-Term Vision
+
+PokeTrack is evolving from a simple price tracker into a card market intelligence tool.
+
+The long-term goal is to help evaluate raw and graded Pokémon cards more accurately, especially Japanese cards where condition-based comps are difficult. Many marketplace listings rely on seller-provided condition labels, but raw card condition often depends heavily on image details such as whitening, corner wear, edge wear, and back-surface quality.
+
+Future development will explore:
+
+- collecting seller listing images from eBay API results
+- separating canonical card images from seller listing photos
+- building a manual condition-review workflow
+- labeling front/back card images for reviewed condition
+- comparing seller-listed condition against reviewed condition
+- developing condition-adjusted market estimates
+- eventually experimenting with AI-assisted condition classification
+
+The goal is not to replace professional grading, but to create a practical tool for better market research and condition-aware comping.
