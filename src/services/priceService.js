@@ -126,11 +126,22 @@ function getDashboardCards() {
     ORDER BY snapshot_date DESC, id DESC
   `).all();
 
+  const activeListingImages = db.prepare(`
+    SELECT
+      snapshot_id AS snapshotId,
+      primary_image_url AS primaryImageUrl
+    FROM ebay_active_listings
+    WHERE primary_image_url IS NOT NULL
+      AND TRIM(primary_image_url) != ''
+    ORDER BY id ASC
+  `).all();
+
   db.close();
 
   const pricesByCard = new Map();
   const snapshotsByCard = new Map();
   const latestEbaySnapshotsByCard = new Map();
+  const firstImageBySnapshot = new Map();
 
   for (const entry of priceEntries) {
     const existingEntries = pricesByCard.get(entry.cardId) || [];
@@ -145,6 +156,12 @@ function getDashboardCards() {
 
     if (snapshot.source === "eBay" && !latestEbaySnapshotsByCard.has(snapshot.cardId)) {
       latestEbaySnapshotsByCard.set(snapshot.cardId, snapshot);
+    }
+  }
+
+  for (const listingImage of activeListingImages) {
+    if (!firstImageBySnapshot.has(listingImage.snapshotId)) {
+      firstImageBySnapshot.set(listingImage.snapshotId, listingImage.primaryImageUrl);
     }
   }
 
@@ -173,6 +190,7 @@ function getDashboardCards() {
       latestActivityDate,
       latestEntry,
       latestEbaySnapshot,
+      thumbnailImageUrl: latestEbaySnapshot ? firstImageBySnapshot.get(latestEbaySnapshot.id) || null : null,
       sevenDayChange,
       profitLoss
     };

@@ -119,11 +119,13 @@ async function fetchEbayActiveListingSnapshot(card) {
   const activeListings = filteredItems
     .filter((item) => item.currency === "USD" && Number.isFinite(item.priceValue))
     .map((item) => ({
+      additionalImageUrls: item.additionalImageUrls,
       currency: item.currency,
       externalItemId: item.externalItemId,
       listingCondition: item.condition,
       listingUrl: item.listingUrl,
       price: item.priceValue,
+      primaryImageUrl: item.primaryImageUrl,
       sellerUsername: item.sellerUsername,
       title: item.title
     }));

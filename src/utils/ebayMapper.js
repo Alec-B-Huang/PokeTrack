@@ -224,6 +224,36 @@ function sortActiveListingsForCard(card, listings) {
   });
 }
 
+function getImageUrl(image) {
+  return image && typeof image.imageUrl === "string" ? image.imageUrl.trim() : "";
+}
+
+function getAdditionalImageUrls(item, primaryImageUrl) {
+  const imageCollections = [
+    item.additionalImages,
+    item.thumbnailImages
+  ].filter(Array.isArray);
+
+  if (imageCollections.length === 0) {
+    return [];
+  }
+
+  const seenUrls = new Set(primaryImageUrl ? [primaryImageUrl] : []);
+
+  return imageCollections
+    .flat()
+    .map(getImageUrl)
+    .filter(Boolean)
+    .filter((imageUrl) => {
+      if (seenUrls.has(imageUrl)) {
+        return false;
+      }
+
+      seenUrls.add(imageUrl);
+      return true;
+    });
+}
+
 function normalizeEbayItems(itemSummaries) {
   return itemSummaries
     .filter(Boolean)
@@ -234,16 +264,22 @@ function normalizeEbayItems(itemSummaries) {
 
       return item.buyingOptions.includes("FIXED_PRICE");
     })
-    .map((item) => ({
-      externalItemId: item.itemId || null,
-      title: item.title || "",
-      buyingOptions: Array.isArray(item.buyingOptions) ? item.buyingOptions : [],
-      condition: item.condition || item.conditionId || null,
-      currency: item.price && item.price.currency ? item.price.currency : null,
-      listingUrl: item.itemWebUrl || item.itemAffiliateWebUrl || null,
-      priceValue: item.price && item.price.value ? Number(item.price.value) : null,
-      sellerUsername: item.seller && item.seller.username ? item.seller.username : null
-    }));
+    .map((item) => {
+      const primaryImageUrl = getImageUrl(item.image);
+
+      return {
+        additionalImageUrls: getAdditionalImageUrls(item, primaryImageUrl),
+        buyingOptions: Array.isArray(item.buyingOptions) ? item.buyingOptions : [],
+        condition: item.condition || item.conditionId || null,
+        currency: item.price && item.price.currency ? item.price.currency : null,
+        externalItemId: item.itemId || null,
+        listingUrl: item.itemWebUrl || item.itemAffiliateWebUrl || null,
+        priceValue: item.price && item.price.value ? Number(item.price.value) : null,
+        primaryImageUrl: primaryImageUrl || null,
+        sellerUsername: item.seller && item.seller.username ? item.seller.username : null,
+        title: item.title || ""
+      };
+    });
 }
 
 function extractUsdPrices(items) {

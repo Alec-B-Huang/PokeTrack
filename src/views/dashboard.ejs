@@ -130,9 +130,18 @@
         <% dashboardCards.forEach((card) => { %>
           <article class="watchlist-grid watchlist-row">
             <div class="watchlist-card-cell">
-              <div class="card-placeholder" aria-hidden="true">
+              <div class="card-placeholder">
                 <div class="card-placeholder-frame">
-                  <span>Image</span>
+                  <% if (card.thumbnailImageUrl) { %>
+                    <img
+                      class="card-thumbnail-image"
+                      src="<%= card.thumbnailImageUrl %>"
+                      alt="<%= card.name %> temporary eBay listing thumbnail"
+                      loading="lazy"
+                    />
+                  <% } else { %>
+                    <span>Image</span>
+                  <% } %>
                 </div>
               </div>
               <div class="watchlist-card-copy">

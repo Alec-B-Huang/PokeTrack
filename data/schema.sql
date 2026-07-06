@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS ebay_active_listings (
   currency TEXT,
   listing_condition TEXT,
   listing_url TEXT,
+  primary_image_url TEXT,
+  additional_image_urls TEXT,
   seller_username TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (snapshot_id) REFERENCES external_price_snapshots(id) ON DELETE CASCADE

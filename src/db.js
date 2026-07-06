@@ -116,6 +116,18 @@ function ensureExternalSalesSnapshotSameDayUniqueness(db) {
   `);
 }
 
+function ensureEbayActiveListingImageSchema(db) {
+  const listingColumns = getTableColumns(db, "ebay_active_listings");
+
+  if (!listingColumns.includes("primary_image_url")) {
+    db.exec("ALTER TABLE ebay_active_listings ADD COLUMN primary_image_url TEXT");
+  }
+
+  if (!listingColumns.includes("additional_image_urls")) {
+    db.exec("ALTER TABLE ebay_active_listings ADD COLUMN additional_image_urls TEXT");
+  }
+}
+
 function getDb() {
   ensureDataDirectory();
 
@@ -126,6 +138,7 @@ function getDb() {
     const schemaSql = fs.readFileSync(schemaPath, "utf8");
     db.exec(schemaSql);
     ensureCardsGradingSchema(db);
+    ensureEbayActiveListingImageSchema(db);
     ensureExternalSnapshotSameDayUniqueness(db);
     ensureExternalSalesSnapshotSameDayUniqueness(db);
     schemaInitialized = true;

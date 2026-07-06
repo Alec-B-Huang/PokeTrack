@@ -3,6 +3,23 @@ const { getDb } = require("../db");
 const SOURCE_EBAY = "eBay";
 const SEARCH_QUERY_IMPORTED_CSV = "CSV import";
 
+function stringifyImageUrls(imageUrls) {
+  return JSON.stringify(Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : []);
+}
+
+function parseImageUrls(imageUrlsJson) {
+  if (!imageUrlsJson) {
+    return [];
+  }
+
+  try {
+    const parsedUrls = JSON.parse(imageUrlsJson);
+    return Array.isArray(parsedUrls) ? parsedUrls.filter(Boolean) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
 function buildSnapshotRowFromRecord(record) {
   return {
     cardId: record.cardId,
@@ -166,9 +183,11 @@ function createExternalPriceSnapshotWithListings(snapshotData, listingRows) {
       currency,
       listing_condition,
       listing_url,
+      primary_image_url,
+      additional_image_urls,
       seller_username
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const deleteListingsForSnapshot = db.prepare(`
     DELETE FROM ebay_active_listings
@@ -190,6 +209,8 @@ function createExternalPriceSnapshotWithListings(snapshotData, listingRows) {
         listing.currency,
         listing.listingCondition,
         listing.listingUrl,
+        listing.primaryImageUrl,
+        stringifyImageUrls(listing.additionalImageUrls),
         listing.sellerUsername
       );
     }
@@ -325,6 +346,8 @@ function getActiveListingsForSnapshot(snapshotId) {
       currency,
       listing_condition AS listingCondition,
       listing_url AS listingUrl,
+      primary_image_url AS primaryImageUrl,
+      additional_image_urls AS additionalImageUrlsJson,
       seller_username AS sellerUsername,
       created_at AS createdAt
     FROM ebay_active_listings
@@ -335,7 +358,17 @@ function getActiveListingsForSnapshot(snapshotId) {
       id ASC
   `);
 
-  const listings = statement.all(snapshotId);
+  const listings = statement.all(snapshotId).map((listing) => {
+    const {
+      additionalImageUrlsJson,
+      ...listingFields
+    } = listing;
+
+    return {
+      ...listingFields,
+      additionalImageUrls: parseImageUrls(additionalImageUrlsJson)
+    };
+  });
   db.close();
   return listings;
 }

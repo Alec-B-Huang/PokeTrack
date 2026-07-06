@@ -1,0 +1,45 @@
+<article class="listing-card">
+  <div class="listing-card-layout">
+    <div class="listing-image-shell">
+      <% if (listing.primaryImageUrl) { %>
+        <img
+          class="listing-image"
+          src="<%= listing.primaryImageUrl %>"
+          alt="<%= listing.title %>"
+          loading="lazy"
+        />
+      <% } else { %>
+        <div class="listing-image-placeholder" aria-hidden="true">
+          <span>Image</span>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="listing-card-content">
+      <h4><%= listing.title %></h4>
+      <p><strong>Price:</strong> <%= formatCurrency(listing.price) %> <%= listing.currency || "" %></p>
+      <p><strong>Condition:</strong> <%= listing.listingCondition || "N/A" %></p>
+      <p><strong>Seller:</strong> <%= listing.sellerUsername || "N/A" %></p>
+      <p><strong>Item ID:</strong> <%= listing.externalItemId || "N/A" %></p>
+      <% if (listing.listingUrl) { %>
+        <p><a href="<%= listing.listingUrl %>" target="_blank" rel="noreferrer">View listing</a></p>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (listing.additionalImageUrls && listing.additionalImageUrls.length > 0) { %>
+    <details class="listing-image-details">
+      <summary>View images (<%= listing.additionalImageUrls.length %>)</summary>
+      <div class="listing-image-strip">
+        <% listing.additionalImageUrls.forEach((imageUrl, imageIndex) => { %>
+          <img
+            class="listing-image listing-image-small"
+            src="<%= imageUrl %>"
+            alt="<%= listing.title %> additional image <%= imageIndex + 1 %>"
+            loading="lazy"
+          />
+        <% }) %>
+      </div>
+    </details>
+  <% } %>
+</article>
