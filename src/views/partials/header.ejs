@@ -9,16 +9,22 @@
   <body>
     <header class="site-header">
       <div class="header-content">
-        <div>
-          <p class="eyebrow">Pokemon Card Market Tracker</p>
-          <h1><a href="/">PokeTrack</a></h1>
+        <div class="brand-lockup">
+          <a class="brand-mark" href="/" aria-label="PokeTrack home">P</a>
+          <div class="brand-copy">
+            <a class="brand-name" href="/">PokeTrack</a>
+            <p class="brand-subtitle">Pokemon card market workspace</p>
+          </div>
         </div>
         <nav class="site-nav">
-          <a href="/">Dashboard</a>
-          <a href="/listings">Listings</a>
-          <a href="/sales">Sales</a>
-          <a href="/external-snapshots/import">Import CSV</a>
+          <a class="<%= pageTitle === 'Dashboard' ? 'is-active' : '' %>" href="/">Dashboard</a>
+          <a class="<%= pageTitle === 'Listings' ? 'is-active' : '' %>" href="/listings">Listings</a>
+          <a class="<%= pageTitle === 'Sales' ? 'is-active' : '' %>" href="/sales">Sales</a>
+          <a class="<%= pageTitle === 'Import External Snapshots' ? 'is-active' : '' %>" href="/external-snapshots/import">Import</a>
         </nav>
+        <div class="header-actions">
+          <a class="button button-dark header-cta" href="/cards/new">+ Add card</a>
+        </div>
       </div>
     </header>
     <main class="page-shell">

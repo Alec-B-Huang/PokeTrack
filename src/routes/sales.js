@@ -17,14 +17,31 @@ const {
 
 const router = express.Router();
 const templatePath = path.join(__dirname, "..", "..", "data", "external_sold_sales_import_template.csv");
+const csvUploadLimitBytes = 1024 * 1024;
+const allowedCsvMimeTypes = new Set([
+  "application/csv",
+  "application/octet-stream",
+  "application/vnd.ms-excel",
+  "text/csv",
+  "text/plain"
+]);
 const upload = multer({
+  limits: {
+    fileSize: csvUploadLimitBytes
+  },
   storage: multer.memoryStorage(),
   fileFilter: (req, file, callback) => {
     const lowerCaseName = (file.originalname || "").toLowerCase();
     const isCsvFile = lowerCaseName.endsWith(".csv");
+    const mimeType = (file.mimetype || "").toLowerCase();
+    const hasAllowedMimeType = !mimeType || allowedCsvMimeTypes.has(mimeType);
 
     if (!isCsvFile) {
       return callback(new Error("Please upload a .csv file."));
+    }
+
+    if (!hasAllowedMimeType) {
+      return callback(new Error("Please upload a valid CSV file."));
     }
 
     return callback(null, true);
@@ -115,8 +132,12 @@ router.get("/sales/import/template", (req, res) => {
 router.post("/sales/import", (req, res) => {
   upload.single("csvFile")(req, res, (uploadError) => {
     if (uploadError) {
+      const uploadErrorMessage = uploadError.code === "LIMIT_FILE_SIZE"
+        ? "CSV uploads must be 1 MB or smaller."
+        : uploadError.message || "Unable to upload that CSV file.";
+
       return res.status(400).render("sales", buildSalesViewModel({
-        errors: [uploadError.message || "Unable to upload that CSV file."],
+        errors: [uploadErrorMessage],
         pastedCsv: req.body?.csvText || ""
       }));
     }

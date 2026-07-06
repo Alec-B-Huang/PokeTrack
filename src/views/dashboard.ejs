@@ -1,101 +1,190 @@
+<%
+  const numericSevenDayCards = dashboardCards.filter((card) => Number.isFinite(Number(card.sevenDayChange)));
+
+  const getBestAvailableMarketValue = (card) => {
+    const manualRawPrice = card.latestEntry ? Number(card.latestEntry.rawPrice) : NaN;
+
+    if (Number.isFinite(manualRawPrice)) {
+      return {
+        source: "manual raw",
+        value: manualRawPrice
+      };
+    }
+
+    const ebayMedianPrice = card.latestEbaySnapshot && card.latestEbaySnapshot.medianPrice !== null
+      ? Number(card.latestEbaySnapshot.medianPrice)
+      : NaN;
+
+    if (Number.isFinite(ebayMedianPrice)) {
+      return {
+        source: "eBay active-listing median",
+        value: ebayMedianPrice
+      };
+    }
+
+    return {
+      source: null,
+      value: null
+    };
+  };
+
+  const cardsWithMarketValues = dashboardCards.map((card) => ({
+    ...card,
+    bestAvailableMarketValue: getBestAvailableMarketValue(card)
+  }));
+  const cardsContributingToKpis = cardsWithMarketValues.filter((card) => card.bestAvailableMarketValue.value !== null);
+  const ebayEstimateCount = cardsContributingToKpis.filter((card) => card.bestAvailableMarketValue.source === "eBay active-listing median").length;
+  const portfolioValue = cardsContributingToKpis.reduce((sum, card) => {
+    return sum + (card.bestAvailableMarketValue.value * Number(card.ownedQuantity || 0));
+  }, 0);
+  const totalProfitLoss = cardsContributingToKpis.reduce((sum, card) => {
+    return sum + ((card.bestAvailableMarketValue.value - Number(card.averageBuyPrice || 0)) * Number(card.ownedQuantity || 0));
+  }, 0);
+  const averageSevenDayChange = numericSevenDayCards.length > 0
+    ? numericSevenDayCards.reduce((sum, card) => sum + Number(card.sevenDayChange), 0) / numericSevenDayCards.length
+    : null;
+%>
+
 <%- include("partials/header", { pageTitle }) %>
 
-<section class="hero-card">
-  <div>
-    <p class="eyebrow">Local Dashboard</p>
-    <h2>Track your watchlist without APIs or scraping</h2>
-    <p class="hero-text">
-      Add cards, log daily prices, and quickly check whether your collection is up or down.
-    </p>
-  </div>
-  <div class="hero-actions">
-    <a class="button" href="/cards/new">Add a Card</a>
-    <a class="button button-secondary" href="/prices/new">Log a Price</a>
-  </div>
-</section>
-
-<% if (successMessage) { %>
-  <section class="message success-message">
-    <p><%= successMessage %></p>
-  </section>
-<% } %>
-
-<section class="panel">
-  <div class="panel-header">
+<section class="dashboard-shell">
+  <section class="dashboard-intro">
     <div>
-      <p class="eyebrow">Watchlist</p>
-      <h3>Tracked Cards</h3>
+      <p class="eyebrow">Portfolio</p>
+      <h2>Dashboard</h2>
+      <p class="dashboard-intro-copy">
+        Track your watchlist, compare active market pricing, and keep your manual collection data organized in one workspace.
+      </p>
     </div>
-    <p><strong><%= dashboardCards.length %></strong> card(s)</p>
-  </div>
+    <div class="dashboard-intro-actions">
+      <a class="button button-dark" href="/cards/new">+ Add card</a>
+      <a class="button button-secondary" href="/prices/new">Log price</a>
+    </div>
+  </section>
 
-  <% if (dashboardCards.length === 0) { %>
-    <div class="empty-state">
-      <h4>Dashboard is currently empty. Add a card to start tracking prices.</h4>
-      <a class="button" href="/cards/new">Add Card</a>
-    </div>
-  <% } else { %>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Card</th>
-            <th>Condition</th>
-            <th>Owned</th>
-            <th>Avg Buy</th>
-            <th>Latest Raw</th>
-            <th>Latest eBay Median</th>
-            <th>7-Day Change</th>
-            <th>Profit/Loss</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% dashboardCards.forEach((card) => { %>
-            <tr>
-              <td>
-                <strong><%= card.name %></strong>
-                <div class="subtle-text"><%= card.setName %> • #<%= card.cardNumber %></div>
-                <% if (card.condition === "Graded" && card.gradingCompany && card.grade) { %>
-                  <div class="subtle-text"><%= card.gradingCompany %> <%= card.grade %></div>
-                <% } %>
-              </td>
-              <td>
-                <% if (card.condition === "Graded" && card.gradingCompany && card.grade) { %>
-                  <%= card.gradingCompany %> <%= card.grade %>
-                <% } else { %>
-                  <%= card.condition %>
-                <% } %>
-              </td>
-              <td><%= card.ownedQuantity %></td>
-              <td><%= formatCurrency(card.averageBuyPrice) %></td>
-              <td><%= card.latestEntry ? formatCurrency(card.latestEntry.rawPrice) : "N/A" %></td>
-              <td>
-                <%= card.latestEbaySnapshot && card.latestEbaySnapshot.medianPrice !== null ? formatCurrency(card.latestEbaySnapshot.medianPrice) : "N/A" %>
-                <% if (card.latestEbaySnapshot) { %>
-                  <div class="subtle-text market-meta">
-                    <%= card.latestEbaySnapshot.snapshotDate %> • <%= card.latestEbaySnapshot.listingCount %> listing(s)
-                  </div>
-                <% } %>
-              </td>
-              <td class="<%= card.sevenDayChange > 0 ? 'positive' : card.sevenDayChange < 0 ? 'negative' : '' %>">
-                <%= formatPercent(card.sevenDayChange) %>
-              </td>
-              <td class="<%= card.profitLoss > 0 ? 'positive' : card.profitLoss < 0 ? 'negative' : '' %>">
-                <%= formatCurrency(card.profitLoss) %>
-              </td>
-              <td>
-                <div class="action-links">
-                  <a href="/cards/<%= card.id %>">View</a>
-                  <a href="/cards/<%= card.id %>/prices/new">Add Price</a>
-                </div>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </div>
+  <% if (successMessage) { %>
+    <section class="message success-message">
+      <p><%= successMessage %></p>
+    </section>
   <% } %>
+
+  <section class="dashboard-stats">
+    <article class="stat-card">
+      <p class="stat-label">Portfolio value</p>
+      <h3 class="stat-value"><%= formatCurrency(portfolioValue) %></h3>
+      <p class="stat-note">Uses latest raw prices first, then eBay active-listing medians when raw prices are missing.</p>
+    </article>
+
+    <article class="stat-card">
+      <p class="stat-label">Total P/L</p>
+      <h3 class="stat-value <%= totalProfitLoss > 0 ? 'positive' : totalProfitLoss < 0 ? 'negative' : '' %>"><%= formatCurrency(totalProfitLoss) %></h3>
+      <p class="stat-note">Best-available market value minus average buy price, multiplied by owned quantity.</p>
+    </article>
+
+    <article class="stat-card">
+      <p class="stat-label">7-day change</p>
+      <h3 class="stat-value <%= averageSevenDayChange > 0 ? 'positive' : averageSevenDayChange < 0 ? 'negative' : '' %>"><%= formatPercent(averageSevenDayChange) %></h3>
+      <p class="stat-note">Average across cards with exact 7-day comparison data.</p>
+    </article>
+
+    <article class="stat-card">
+      <p class="stat-label">Cards tracked</p>
+      <h3 class="stat-value"><%= dashboardCards.length %></h3>
+      <p class="stat-note">Watchlist entries currently saved in your local app.</p>
+    </article>
+  </section>
+
+  <% if (ebayEstimateCount > 0) { %>
+    <p class="dashboard-estimate-note">
+      KPI totals include <%= ebayEstimateCount %> eBay active-listing median estimate(s) where manual raw prices are missing. These are not confirmed sold prices.
+    </p>
+  <% } %>
+
+  <section class="watchlist-surface">
+    <div class="watchlist-surface-header">
+      <div>
+        <p class="eyebrow">Watchlist</p>
+        <h3>Tracked cards</h3>
+      </div>
+      <p class="watchlist-count"><strong><%= dashboardCards.length %></strong> card(s)</p>
+    </div>
+
+    <% if (dashboardCards.length === 0) { %>
+      <div class="empty-state dashboard-empty-state">
+        <h4>Dashboard is currently empty. Add a card to start tracking prices.</h4>
+        <a class="button button-dark" href="/cards/new">Add Card</a>
+      </div>
+    <% } else { %>
+      <div class="watchlist-board">
+        <div class="watchlist-grid watchlist-head">
+          <div>Card</div>
+          <div>Grade</div>
+          <div>Avg buy</div>
+          <div>Latest raw</div>
+          <div>Median</div>
+          <div>7d change</div>
+          <div>P/L</div>
+          <div>Actions</div>
+        </div>
+
+        <% dashboardCards.forEach((card) => { %>
+          <article class="watchlist-grid watchlist-row">
+            <div class="watchlist-card-cell">
+              <div class="card-placeholder" aria-hidden="true">
+                <div class="card-placeholder-frame">
+                  <span>Image</span>
+                </div>
+              </div>
+              <div class="watchlist-card-copy">
+                <a class="watchlist-card-title" href="/cards/<%= card.id %>"><%= card.name %></a>
+                <p class="watchlist-card-meta"><%= card.setName %> • #<%= card.cardNumber %></p>
+                <p class="watchlist-card-meta">Qty <%= card.ownedQuantity %></p>
+              </div>
+            </div>
+
+            <div class="watchlist-chip-cell">
+              <% if (card.condition === "Graded" && card.gradingCompany && card.grade) { %>
+                <span class="watchlist-chip watchlist-chip-graded"><%= card.gradingCompany %> <%= card.grade %></span>
+              <% } else { %>
+                <span class="watchlist-chip"><%= card.condition.replace("Near Mint", "NM").replace("Lightly Played", "LP").replace("Moderately Played", "MP").replace("Heavily Played", "HP") %></span>
+              <% } %>
+            </div>
+
+            <div class="watchlist-number"><%= formatCurrency(card.averageBuyPrice) %></div>
+            <div class="watchlist-number"><%= card.latestEntry ? formatCurrency(card.latestEntry.rawPrice) : "N/A" %></div>
+
+            <div class="watchlist-market-cell">
+              <div class="watchlist-number">
+                <%= card.latestEbaySnapshot && card.latestEbaySnapshot.medianPrice !== null ? formatCurrency(card.latestEbaySnapshot.medianPrice) : "N/A" %>
+              </div>
+              <% if (card.latestEbaySnapshot) { %>
+                <div class="watchlist-market-meta"><%= card.latestEbaySnapshot.snapshotDate %> • <%= card.latestEbaySnapshot.listingCount %> listings</div>
+              <% } else { %>
+                <div class="watchlist-market-meta">No saved eBay snapshot</div>
+              <% } %>
+            </div>
+
+            <div>
+              <span class="trend-pill <%= card.sevenDayChange > 0 ? 'trend-pill-positive' : card.sevenDayChange < 0 ? 'trend-pill-negative' : 'trend-pill-neutral' %>">
+                <%= formatPercent(card.sevenDayChange) %>
+              </span>
+            </div>
+
+            <div>
+              <span class="pl-pill <%= card.profitLoss > 0 ? 'pl-pill-positive' : card.profitLoss < 0 ? 'pl-pill-negative' : 'pl-pill-neutral' %>">
+                <%= formatCurrency(card.profitLoss) %>
+              </span>
+            </div>
+
+            <div class="watchlist-actions">
+              <a class="mini-action" href="/cards/<%= card.id %>">View</a>
+              <a class="mini-action" href="/cards/<%= card.id %>/prices/new">Add Price</a>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
 </section>
 
 <%- include("partials/footer") %>

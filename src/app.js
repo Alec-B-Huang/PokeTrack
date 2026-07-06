@@ -1,4 +1,5 @@
 const express = require("express");
+const helmet = require("helmet");
 const path = require("path");
 
 require("./config/env");
@@ -13,6 +14,7 @@ const salesRoutes = require("./routes/sales");
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 const host = process.env.HOST || "127.0.0.1";
+const formBodyLimit = "1mb";
 
 const conditionOptions = [
   "Raw/Near Mint",
@@ -28,7 +30,10 @@ const gradeOptions = Array.from({ length: 10 }, (_, index) => index + 1);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-app.use(express.urlencoded({ extended: true }));
+app.use(helmet({
+  contentSecurityPolicy: false
+}));
+app.use(express.urlencoded({ extended: true, limit: formBodyLimit }));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.locals.conditionOptions = conditionOptions;
@@ -64,12 +69,21 @@ app.use("/", priceRoutes);
 app.use("/", salesRoutes);
 
 app.use((error, req, res, next) => {
-  console.error(error);
   if (res.headersSent) {
     return next(error);
   }
 
-  return res.status(500).send("Something went wrong inside PokeTrack.");
+  if (error.type === "entity.too.large") {
+    return res.status(413).send("Submitted form data is too large.");
+  }
+
+  if (app.get("env") === "production") {
+    console.error(error.message);
+  } else {
+    console.error(error);
+  }
+
+  return res.status(error.status || 500).send("Something went wrong inside PokeTrack.");
 });
 
 if (require.main === module) {
